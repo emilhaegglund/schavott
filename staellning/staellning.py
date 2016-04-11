@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+
+
 import os
 import argparse
 import poretools
@@ -282,7 +284,8 @@ class Fast5Handler(PatternMatchingEventHandler):
                 counter, completed = scaffolding_reads(args, list_of_files,
                                                        counter, completed)
 
-if __name__ == '__main__':
+def main():
+    """ Main application. """
     list_of_files = []
     global completed
     completed = False
@@ -311,9 +314,11 @@ if __name__ == '__main__':
     observer1.schedule(Fast5Handler(), path=args.watch)
     observer1.start()
 
-   
     while not completed:
         time.sleep(1)
     print('Completed!')
     observer1.stop()
     observer1.join()
+
+if __name__ == '__main__':
+    main()
