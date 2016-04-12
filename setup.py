@@ -1,7 +1,7 @@
 from setuptools import setup
 
 
-setup(name='staellning',
+setup(name='schavott',
       version='0.1',
       description='Scaffolding in real-time',
       url='http://github.com/emilhaegglund/staellning',
@@ -9,6 +9,5 @@ setup(name='staellning',
       license='',
       install_requires=[
         'bokeh',
-        'watchdog'],
-      scripts=['bin/staellning']
+        'watchdog']
       )
