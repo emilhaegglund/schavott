@@ -2,11 +2,13 @@ import subprocess
 import os
 
 
-path_to_SSPACE = '/scratch/emihag/SSPACE-LongRead_v1-1/SSPACE-LongRead.pl'
-
 # Counter for multifasta file
 global reads
 reads = 0
+
+
+def test_sspace(path_to_SSPACE):
+    return os.path.isfile(path_to_SSPACE)
 
 
 def create_multi_fasta(long_reads, output):
@@ -131,7 +133,8 @@ def parse_sspace_out(output, counter, genome_size):
     return number_of_scaffolds, counter, completed
 
 
-def run_sspace(short_reads, long_reads, output_dir, counter, genome_size):
+def run_sspace(short_reads, long_reads, output_dir, counter, genome_size,
+               path_to_SSPACE):
     """Run SSPACE scaffolder
 
     Args:

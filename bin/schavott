@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-import os
+import sys
 import argparse
 import poretools
 import time
 import timeit
 
 from schavott.links import run_links
-from schavott.sspace import run_sspace
+from schavott.sspace import run_sspace, test_sspace
 from schavott.fastainfo import get_N50, get_contigs, get_contig_sizes
 
 from watchdog.observers import Observer
@@ -70,7 +70,12 @@ def run_scaffold(args, list_of_files, counter):
     if args.scaffolder == 'links':
         scaffolds = run_links(args.short_reads, list_of_files, args.output)
     elif args.scaffolder == 'sspace':
-        scaffolds, counter, completed = run_sspace(args.short_reads, list_of_files, args.output, counter, args.genome_size)
+        scaffolds, counter, completed = run_sspace(args.short_reads, 
+                                                   list_of_files,
+                                                   args.output,
+                                                   counter,
+                                                   args.genome_size,
+                                                   args.sspace_path)
         update(counter)
     else:
 
@@ -92,12 +97,13 @@ def short_read_assembly(path):
 
 def bokeh_plots(counter):
     """ Setup bokeh plots. """
-
+    global source
     source = ColumnDataSource(dict(
         reads=counter[2],
         scaffolds=counter[3],
         n50=counter[1]
     ))
+    global contig_src
     contig_src = ColumnDataSource(dict(start=[0],
                                        stop=[2*pi],
                                        colors=['green'],
@@ -223,7 +229,9 @@ def parse_arguments():
                                                   in real time')
     parser.add_argument('--scaffolder', '-s', required=True,
                         choices=['links', 'sspace'],
-                        help='Which scaffolder tu use')
+                        help='Which scaffolder to use')
+    parser.add_argument('--sspace_path', '-p',
+                        help='Path to SSPACE')
     parser.add_argument('--assembly', '-a',
                         help='Try to assembly reads with canu')
     parser.add_argument('--watch', '-w', required=True,
@@ -284,14 +292,20 @@ class Fast5Handler(PatternMatchingEventHandler):
 
 def main():
     """ Main application. """
+    global list_of_files
     list_of_files = []
     global completed
     completed = False
+    global args
     args = parse_arguments()
     if args.run_mode == 'time':
         # Must use global timer.
         global tic
         tic = timeit.default_timer()
+
+    if args.scaffolder == 'sspace':
+        if not test_sspace(args.sspace_path):
+            sys.exit("Failed to find SSPACE")
 
     # Listen for Fast5 files in dir
     # This must be setup from short read assemblie information
@@ -309,7 +323,7 @@ def main():
 
     # create and start observer
     observer1 = Observer()
-    observer1.schedule(Fast5Handler(), path=args.watch)
+    observer1.schedule(Fast5Handler(args), path=args.watch)
     observer1.start()
 
     while not completed:
