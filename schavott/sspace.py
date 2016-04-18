@@ -1,7 +1,5 @@
 import subprocess
-import argparse
 import os
-import matplotlib.pyplot as plt
 
 
 path_to_SSPACE = '/scratch/emihag/SSPACE-LongRead_v1-1/SSPACE-LongRead.pl'

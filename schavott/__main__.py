@@ -1,4 +1,4 @@
-from .staellning import main
+from .schavott import main
 
 
 main()
