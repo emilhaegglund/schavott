@@ -1,5 +1,6 @@
 import subprocess
 import os
+from contig_info import get_N50, get_contigs, get_contig_sizes
 
 
 # Counter for multifasta file
@@ -75,23 +76,24 @@ def parse_sspace_out(output, counter, genome_size):
                 completed = False
 
     fasta_file = output + '/scaffolds.fasta'
-    process = subprocess.Popen(['fastainfo', fasta_file], stdout=subprocess.PIPE)
-    out = process.communicate()
-    out = out[0].splitlines()
-    for line in out:
-        if line[0:3] == 'N50':
-            N50 = line[5:]
+    # process = subprocess.Popen(['fastainfo', fasta_file], stdout=subprocess.PIPE)
+    # out = process.communicate()
+    # out = out[0].splitlines()
+    # for line in out:
+    #     if line[0:3] == 'N50':
+    #         N50 = line[5:]
+    N50 = get_N50(fasta_file)
 
-    with open('N50.csv', 'a') as N50_file:
-        N50_file.write(N50 + ', ')
+    # with open('N50.csv', 'a') as N50_file:
+    #     N50_file.write(N50 + ', ')
 
-    number_of_scaffolds = len(scaffolds)
+    number_of_scaffolds = get_contigs(fasta_file)
     counter[3].append(number_of_scaffolds)
     
     reads = counter[0] * 100
     counter[1].append(int(N50))
     counter[2].append(reads + 100)
-    counter[4] = scaffolds
+    counter[4] = get_contig_sizes(fasta_file)
     # fig, ax1 = plt.subplots()
     # ax1.plot(counter[2], counter[1], 'b')
     # ax1.set_ylabel('N50', color='b')

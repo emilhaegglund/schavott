@@ -7,7 +7,7 @@ import timeit
 
 from schavott.links import run_links
 from schavott.sspace import run_sspace, test_sspace
-from schavott.fastainfo import get_N50, get_contigs, get_contig_sizes
+from schavott.contig_info import get_N50, get_contigs, get_contig_sizes
 
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
@@ -89,25 +89,28 @@ def short_read_assembly(path):
     short_read_contigs = get_contigs(path)
     contig_sizes = get_contig_sizes(path)
 
-    short_read_assembly_data = [0, n50,
-                                short_read_contigs,
+    short_read_assembly_data = [0, [n50], [0],
+                                [short_read_contigs],
                                 contig_sizes]
     return short_read_assembly_data
 
 
 def bokeh_plots(counter):
     """ Setup bokeh plots. """
+    print(counter)
     global source
     source = ColumnDataSource(dict(
         reads=counter[2],
         scaffolds=counter[3],
         n50=counter[1]
     ))
+    circle = calculate_circle(counter)
     global contig_src
-    contig_src = ColumnDataSource(dict(start=[0],
-                                       stop=[2*pi],
-                                       colors=['green'],
-                                       contigs = [0]))
+    contig_src = ColumnDataSource(dict(start=circle[0],
+                                       stop=circle[1],
+                                       colors=circle[2],
+                                       contigs = circle[3]))
+    print(contig_src)
 
     # setup bokeh-plots
     n50_plot = n50(source)
@@ -161,9 +164,7 @@ def contig_circle(contig_src):
     return plot
 
 
-def update(counter):
-    """ Stream new data to bokeh-plot.
-    """
+def calculate_circle(counter):
     total = 2*pi
     contigs = []
     for keys in counter[4]:
@@ -187,16 +188,28 @@ def update(counter):
         total_length += contig_lengths[i]
         stop.append(total_length)
 
+
+    circle = [start, stop, colors, contigs]
+    print(circle)
+    return circle
+
+
+def update(counter):
+    """ Stream new data to bokeh-plot.
+    """
+
+    circle = calculate_circle(counter)
+
     new_data = dict(
         reads=[counter[2][-1]],
         scaffolds=[counter[3][-1]],
         n50=[counter[1][-1]],
         )
     contig_new_data = dict(
-        start = start,
-        stop = stop,
-        colors = colors,
-        contigs = contigs 
+        start = circle[0],
+        stop = circle[1],
+        colors = circle[2],
+        contigs = circle[3] 
         )
     source.stream(new_data, 400)
     contig_src.remove('start')
@@ -311,12 +324,12 @@ def main():
     # This must be setup from short read assemblie information
     # Setup initial counter
 
-    N50_list = [90152]
-    reads_list = [0]
-    scaffold_list = [44]
+    # N50_list = [90152]
+    # reads_list = [0]
+    # scaffold_list = [44]
     global counter
-    # counter = short_assembly(args.short_reads)
-    counter = [0, N50_list, reads_list, scaffold_list, None]
+    counter = short_read_assembly(args.short_reads)
+    # counter = [0, N50_list, reads_list, scaffold_list, None]
 
     # start_bokeh_server()
     bokeh_plots(counter)
