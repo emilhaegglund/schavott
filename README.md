@@ -9,12 +9,13 @@ Python-requirements
 Bokeh
 Poretools
 Watchdog
+pyfasta
 
 Applications
 -------------
-SSPACE
+SSPACE-longreads
 
 Instructions
 ------------
-
+Download the zip-file or use git to clone the repository. Install using `python setup.py install`.
 
