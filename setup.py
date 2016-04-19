@@ -15,7 +15,7 @@ setup(name='schavott',
       scripts = ['bin/schavott'],
       packages = ['schavott'],
       install_requires=[
-        'pyfasta'
+        'pyfasta',
         'h5py>=2.2.0',
         'bokeh',
         'watchdog',

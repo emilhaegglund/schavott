@@ -30,7 +30,7 @@ df = pd.read_csv('/scratch/emihag/data/raw/K2000295_FSC771_mkI_R73_20160317/down
 df = df.sort_values(by='unix_timestamp_end')
 min_time = df['unix_timestamp_end'].min()
 df['time'] = df['unix_timestamp_end'] - min_time
-print(df)
+print(df['filename'])
 time_list = df['time'].tolist()
 file_list = df['filename'].tolist()
 print(file_list[0:15])
@@ -50,7 +50,7 @@ counter = 1
 for i, fast5 in enumerate(file_list):
     # if not os.path.isfile('/tmp/scaffolding.pid'):
     #     break
-    time.sleep(0.5)
+    time.sleep(0.1)
     if fast5.endswith("fast5"):
         print('Copy file: ' + str(fast5))
         shutil.copyfile(from_path+fast5, to_path + fast5[4:])

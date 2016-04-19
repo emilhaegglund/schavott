@@ -51,7 +51,8 @@ def scaffolding_reads(args, list_of_files, counter, completed):
     if len(list_of_files) % int(args.intensity) == 0:
         scaffolds, counter, completed = run_scaffold(args, list_of_files, counter)
         print("Scaffolds: " + str(scaffolds))
-        if scaffolds <= args.stop:
+        if scaffolds <= int(args.stop) or completed is True:
+            print("In stop if")
             completed = stop()
         return counter, completed
     else:
@@ -75,7 +76,8 @@ def run_scaffold(args, list_of_files, counter):
                                                    args.output,
                                                    counter,
                                                    args.genome_size,
-                                                   args.sspace_path)
+                                                   args.sspace_path,
+                                                   args.intensity)
         update(counter)
     else:
 
@@ -91,7 +93,7 @@ def short_read_assembly(path):
 
     short_read_assembly_data = [0, [n50], [0],
                                 [short_read_contigs],
-                                contig_sizes]
+                                contig_sizes, 0]
     return short_read_assembly_data
 
 
@@ -294,7 +296,7 @@ class Fast5Handler(PatternMatchingEventHandler):
             with open(filename, 'w') as fasta_file:
                 fasta_file.write(str(seq[0]))
             list_of_files.append(filename)
-            print('Number of fasta files: ' + str(len(list_of_files)))
+            counter[5] += 1
             print('Number of 2D reads:' + str(len(list_of_files)))
             if args.run_mode == 'time':
                 scaffolding_time(args, list_of_files)

@@ -42,7 +42,7 @@ def create_multi_fasta(long_reads, output):
     return path
 
 
-def parse_sspace_out(output, counter, genome_size):
+def parse_sspace_out(output, counter, genome_size, intensity):
     """Find the number of scaffolds.
 
     Parse the scaffold_evidence.txt to find the number
@@ -69,74 +69,32 @@ def parse_sspace_out(output, counter, genome_size):
             scaffold_length = scaffold[1]
             scaffold_length = int(scaffold_length[4:])
             scaffolds[scaffold[0][1:]] = scaffold_length
-            if scaffold_length > int(genome_size) * 0.5 and scaffold_length < int(genome_size) * 1.5:
+            if scaffold_length > int(genome_size) * 0.2 and scaffold_length < int(genome_size) * 1.05:
                 print('Set completed to True')
                 completed = True
             else:
                 completed = False
 
     fasta_file = output + '/scaffolds.fasta'
-    # process = subprocess.Popen(['fastainfo', fasta_file], stdout=subprocess.PIPE)
-    # out = process.communicate()
-    # out = out[0].splitlines()
-    # for line in out:
-    #     if line[0:3] == 'N50':
-    #         N50 = line[5:]
     N50 = get_N50(fasta_file)
-
-    # with open('N50.csv', 'a') as N50_file:
-    #     N50_file.write(N50 + ', ')
-
+    counter[4] = get_contig_sizes(fasta_file)
     number_of_scaffolds = get_contigs(fasta_file)
     counter[3].append(number_of_scaffolds)
-    
-    reads = counter[0] * 100
+
+    # reads = counter[0] * int(intensity)
     counter[1].append(int(N50))
-    counter[2].append(reads + 100)
-    counter[4] = get_contig_sizes(fasta_file)
-    # fig, ax1 = plt.subplots()
-    # ax1.plot(counter[2], counter[1], 'b')
-    # ax1.set_ylabel('N50', color='b')
-    # ax1.set_ylim([0, int(genome_size)])
-    # ax1.set_xlim([0, counter[2][-1]+100])
-    # for tl in ax1.get_yticklabels():
-    #     tl.set_color('b')
-
-    # ax2 = ax1.twinx()
-    # ax2.plot(counter[2], counter[3], 'r')
-    # ax2.set_ylabel('Scaffolds', color='r')
-    # ax2.set_ylim([0, counter[3][0]])
-    # ax2.set_xlim([0, counter[2][-1]+100])
-    # for tl in ax2.get_yticklabels():
-    #     tl.set_color('r')
+    counter[2].append(counter[5])
     
-    # plt.savefig('foo' + str(counter[0]) + '.png')
-
-    # print('counter[1]: ' + str(counter[1]))
-    # print('counter[2]: ' + str(counter[2]))
-    # with open('sspace_result.csv', 'a') as store_result:
-    #     result_string = str(reads) + ', '
-    #     for key in scaffolds.keys():
-    #             result_string = result_string + str(scaffolds[key][-1]) + ', '
-    #     result_string = result_string + '\n'
-    #     store_result.write(result_string)
+    with open('run_statistics.csv', 'a') as statistics:
+        statistics.write(counter[5] + ',' + number_of_scaffolds + ',' + N50 + '\n') 
 
     counter[0] += 1
-    # Test set-up, following code is only for test purpose.
-    # scaffold_length = 1850959
-    # if scaffold_length > int(genome_size) * 0.9 and scaffold_length < int(genome_size) * 1.1:
-    #     completed = True
-    # else:
-    #     completed = False
-
-    # counter += 1
-    # number_of_scaffolds = 13
 
     return number_of_scaffolds, counter, completed
 
 
 def run_sspace(short_reads, long_reads, output_dir, counter, genome_size,
-               path_to_SSPACE):
+               path_to_SSPACE, intensity):
     """Run SSPACE scaffolder
 
     Args:
@@ -165,7 +123,7 @@ def run_sspace(short_reads, long_reads, output_dir, counter, genome_size,
                                stdout=subprocess.PIPE)
     out, err = process.communicate()
 
-    number_of_scaffolds, counter, completed = parse_sspace_out(output, counter, genome_size)
+    number_of_scaffolds, counter, completed = parse_sspace_out(output, counter, genome_size, intensity)
 
     # # Test set-up
     # print("Fake run SSPACE...")
