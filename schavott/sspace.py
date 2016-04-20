@@ -86,7 +86,7 @@ def parse_sspace_out(output, counter, genome_size, intensity):
     counter[2].append(counter[5])
     
     with open('run_statistics.csv', 'a') as statistics:
-        statistics.write(counter[5] + ',' + number_of_scaffolds + ',' + N50 + '\n') 
+        statistics.write(str(counter[5]) + ',' + str(number_of_scaffolds) + ',' + str(N50) + '\n') 
 
     counter[0] += 1
 
