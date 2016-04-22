@@ -1,4 +1,4 @@
-Schavott v. 0.1.0
+Schavott v0.1.0
 ========
 *Emil Haegglund*  
 Appliction for scaffolding bacterial genomes in Real-time with SSPACE-longreads
