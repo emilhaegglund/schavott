@@ -42,7 +42,7 @@ def create_multi_fasta(long_reads, output):
     return path
 
 
-def parse_sspace_out(output, counter, genome_size, intensity):
+def parse_sspace_out(output_dir, counter, genome_size, intensity):
     """Find the number of scaffolds.
 
     Parse the scaffold_evidence.txt to find the number
@@ -56,7 +56,7 @@ def parse_sspace_out(output, counter, genome_size, intensity):
             obtained when running SSPACE.
     """
     print('Parse SSPACE output')
-    file_path = output + '/scaffold_evidence.txt'
+    file_path = output_dir + '_' + str(counter[0]) + '/scaffold_evidence.txt'
     with open(file_path, 'r') as result_file:
         content = result_file.readlines()
 
@@ -75,7 +75,7 @@ def parse_sspace_out(output, counter, genome_size, intensity):
             else:
                 completed = False
 
-    fasta_file = output + '/scaffolds.fasta'
+    fasta_file = output_dir + '_' + str(counter[0]) + '/scaffolds.fasta'
     N50 = get_N50(fasta_file)
     counter[4] = get_contig_sizes(fasta_file)
     number_of_scaffolds = get_contigs(fasta_file)
@@ -85,7 +85,7 @@ def parse_sspace_out(output, counter, genome_size, intensity):
     counter[1].append(int(N50))
     counter[2].append(counter[5])
     
-    with open('run_statistics.csv', 'a') as statistics:
+    with open(output_dir +  '_statistics.csv', 'a') as statistics:
         statistics.write(str(counter[5]) + ',' + str(number_of_scaffolds) + ',' + str(N50) + '\n') 
 
     counter[0] += 1
@@ -123,7 +123,7 @@ def run_sspace(short_reads, long_reads, output_dir, counter, genome_size,
                                stdout=subprocess.PIPE)
     out, err = process.communicate()
 
-    number_of_scaffolds, counter, completed = parse_sspace_out(output, counter, genome_size, intensity)
+    number_of_scaffolds, counter, completed = parse_sspace_out(output_dir, counter, genome_size, intensity)
 
     # # Test set-up
     # print("Fake run SSPACE...")

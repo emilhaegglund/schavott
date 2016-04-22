@@ -1,8 +1,9 @@
 import pyfasta
+import sys
+
 
 def get_N50(path):
     """Return N50 value."""
-    f = pyfasta.Fasta(path)
     contig_sizes = get_contig_size_list(path)
     total_bases = sum(contig_sizes)
     half_size = total_bases/2
@@ -11,7 +12,7 @@ def get_N50(path):
     for contig in contig_sizes:
         N50 = contig
         contig_sum += contig
-        if  contig_sum > half_size:
+        if contig_sum > half_size:
             break
 
     return N50
@@ -19,13 +20,21 @@ def get_N50(path):
 
 def get_contigs(path):
     """Return number of contigs."""
-    f = pyfasta.Fasta(path)
+    try:
+        f = pyfasta.Fasta(path)
+    except pyfasta.fasta.FastaNotFound:
+        print("Error: contig file does not exist")
+        sys.exit()
     return len(f)
 
 
 def get_contig_sizes(path):
     """Return size of each contig."""
-    f = pyfasta.Fasta(path)
+    try:
+        f = pyfasta.Fasta(path)
+    except pyfasta.fasta.FastaNotFound:
+        print("Error: contig file does not exist")
+        sys.exit()
     contig_sizes = {}
     for keys in f.keys():
         contig_sizes[keys] = len(f[keys])
@@ -34,7 +43,11 @@ def get_contig_sizes(path):
 
 
 def get_contig_size_list(path):
-    f = pyfasta.Fasta(path)
+    try:
+        f = pyfasta.Fasta(path)
+    except pyfasta.fasta.FastaNotFound:
+        print("Error: contig file does not exist")
+        sys.exit()
     contig_sizes = []
     for keys in f.keys():
         contig_sizes.append(len(f[keys]))

@@ -22,7 +22,7 @@ import numpy as np
 from numpy import pi
 
 
-def scaffolding_time(args, list_of_files):
+def scaffolding_time(args, list_of_files, counter, completed):
     """Use timer to start scaffolding process.
 
     Args:
@@ -34,12 +34,13 @@ def scaffolding_time(args, list_of_files):
     global tic
     toc = timeit.default_timer()
     if toc - tic > int(args.intensity):
-        scaffolds = run_scaffold(args, list_of_files)
+        scaffolds, counter, completed = run_scaffold(args, list_of_files, counter)
         print("Scaffolds: " + str(scaffolds))
-        if scaffolds <= args.stop:
-            stop()
+        if scaffolds <= int(args.stop) or completed is True:
+            completed = stop()
         tic = timeit.default_timer()
 
+    return counter, completed
 
 def scaffolding_reads(args, list_of_files, counter, completed):
     """Use read counts to start scaffolding process.
@@ -55,9 +56,8 @@ def scaffolding_reads(args, list_of_files, counter, completed):
         if scaffolds <= int(args.stop) or completed is True:
             print("In stop if")
             completed = stop()
-        return counter, completed
-    else:
-        return counter, completed
+
+    return counter, completed
 
 
 def run_scaffold(args, list_of_files, counter):
@@ -70,9 +70,9 @@ def run_scaffold(args, list_of_files, counter):
         number_of_scaffolds
     """
     if args.scaffolder == 'links':
-        scaffolds = run_links(args.short_reads, list_of_files, args.output)
+        scaffolds = run_links(args.contig_file, list_of_files, args.output)
     elif args.scaffolder == 'sspace':
-        scaffolds, counter, completed = run_sspace(args.short_reads, 
+        scaffolds, counter, completed = run_sspace(args.contig_file, 
                                                    list_of_files,
                                                    args.output,
                                                    counter,
@@ -80,9 +80,6 @@ def run_scaffold(args, list_of_files, counter):
                                                    args.sspace_path,
                                                    args.intensity)
         update(counter)
-    else:
-
-        print('Should never go here, must select a scaffolder')
     return scaffolds, counter, completed
 
 
@@ -116,8 +113,8 @@ def bokeh_plots(counter):
     print(contig_src)
 
     # setup bokeh-plots
-    n50_plot = n50(source)
-    contig_numbers_plot = contig_numbers(source)
+    n50_plot = n50(source, counter)
+    contig_numbers_plot = contig_numbers(source, counter)
     contig_circle_plot = contig_circle(contig_src)
     layout = hplot(contig_numbers_plot,
                    n50_plot,
@@ -126,12 +123,10 @@ def bokeh_plots(counter):
     session.show()
 
 
-def n50(source):
+def n50(source, counter):
     """ Create N50 plot."""
-    plot = figure(y_range=(0, 1500000))
-    plot.x_range.follow = "end"
-    plot.x_range.follow_interval = 500
-    plot.circle(x='reads', y='n50', source=source, size=12, color='red')
+    plot = figure()
+    plot.circle(x='reads', y='n50', source=source, size=6, color='red')
     plot.line(x='reads', y='n50', source=source, color='red')
     plot.title = 'N50 values'
     plot.xaxis.axis_label = 'Reads'
@@ -140,12 +135,10 @@ def n50(source):
     return plot
 
 
-def contig_numbers(source):
+def contig_numbers(source, counter):
     """Create contig number plot. """
-    plot = figure(y_range=(0, 50))
-    plot.x_range.follow = "end"
-    plot.x_range.follow_interval = 500
-    plot.circle(x='reads', y='scaffolds', source=source, size=10)
+    plot = figure(y_range=(0, counter[3][0]+counter[3][0]*0.1))
+    plot.circle(x='reads', y='scaffolds', source=source, size=6)
     plot.line(x='reads', y='scaffolds', source=source)
     plot.title = 'Number of contigs'
     plot.xaxis.axis_label = 'Reads'
@@ -191,7 +184,6 @@ def calculate_circle(counter):
         total_length += contig_lengths[i]
         stop.append(total_length)
 
-
     circle = [start, stop, colors, contigs]
     print(circle)
     return circle
@@ -209,10 +201,10 @@ def update(counter):
         n50=[counter[1][-1]],
         )
     contig_new_data = dict(
-        start = circle[0],
-        stop = circle[1],
-        colors = circle[2],
-        contigs = circle[3] 
+        start=circle[0],
+        stop=circle[1],
+        colors=circle[2],
+        contigs=circle[3] 
         )
     source.stream(new_data, 400)
     contig_src.remove('start')
@@ -243,30 +235,36 @@ def parse_arguments():
     """
     parser = argparse.ArgumentParser(description='Scaffold genomes\
                                                   in real time')
-    parser.add_argument('--scaffolder', '-s', required=True,
+    parser.add_argument('--scaffolder', '-s',
                         choices=['links', 'sspace'],
-                        help='Which scaffolder to use')
+                        default='sspace',
+                        help='''Which scaffolder to use. Only SSPACE-Longreads\
+                        supported. (Default: SSPACE-Longreads)''')
     parser.add_argument('--sspace_path', '-p',
                         help='Path to SSPACE')
-    parser.add_argument('--assembly', '-a',
-                        help='Try to assembly reads with canu')
     parser.add_argument('--watch', '-w', required=True,
                         help='Directory to watch for fast5 files')
-    parser.add_argument('--short_reads', '-c', required=True,
-                        help='Path to short read file')
-    parser.add_argument('--run_mode', '-r', required=True,
+    parser.add_argument('--contig_file', '-c', required=True,
+                        help='Path to contig file')
+    parser.add_argument('--run_mode', '-r', default='reads',
                         choices=['time', 'reads'],
-                        help='Use timer or read count')
-    parser.add_argument('--intensity', '-i', required=True,
-                        help='How often to run the assembler')
+                        help='''Use timer or read count.\
+                        (Default: reads)''')
+    parser.add_argument('--intensity', '-i', default=100,
+                        help='''How often the scaffolding process should run.\
+                        If run mode is set to reads, scaffolding will run every\
+                        i:th read.\
+                        If run mode is time, scaffolding will run\
+                        every i:th second.\
+                        (Defaut: 100 reads)''')
     parser.add_argument('--stop', '-q', required=True,
-                        help='Stop minION when this number of scaffolds\
+                        help='Stop MinION when this number of scaffolds\
                         has been reached.')
     parser.add_argument('--genome_size', '-g', required=True,
-                        help='Stop MinION when a scaffold is within 10% of this\
+                        help='Stop MinION when a scaffold is within 10 of this\
                         value.')
-    parser.add_argument('--output', '-o', required=True,
-                        help='Output directory for scaffold files')
+    parser.add_argument('--output', '-o', default='schavott',
+                        help='''Set output filename. (Defaut: schavott)''')
 
     args = parser.parse_args()
 
@@ -311,7 +309,9 @@ class Fast5Handler(PatternMatchingEventHandler):
             counter[5] += 1
             print('Number of 2D reads:' + str(len(list_of_files)))
             if args.run_mode == 'time':
-                scaffolding_time(args, list_of_files)
+                global counter, completed
+                counter, completed = scaffolding_time(args, list_of_files,
+                                                      counter, completed)
             else:
                 global counter, completed
                 counter, completed = scaffolding_reads(args, list_of_files,
@@ -342,7 +342,7 @@ def main():
     # reads_list = [0]
     # scaffold_list = [44]
     global counter
-    counter = short_read_assembly(args.short_reads)
+    counter = short_read_assembly(args.contig_file)
     # counter = [0, N50_list, reads_list, scaffold_list, None]
 
     # start_bokeh_server()
