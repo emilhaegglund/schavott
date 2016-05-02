@@ -42,7 +42,7 @@ def create_multi_fasta(long_reads, output):
     return path
 
 
-def parse_sspace_out(output_dir, counter, genome_size, intensity):
+def parse_sspace_out(output_dir, counter, intensity):
     """Find the number of scaffolds.
 
     Parse the scaffold_evidence.txt to find the number
@@ -69,11 +69,11 @@ def parse_sspace_out(output_dir, counter, genome_size, intensity):
             scaffold_length = scaffold[1]
             scaffold_length = int(scaffold_length[4:])
             scaffolds[scaffold[0][1:]] = scaffold_length
-            if scaffold_length > int(genome_size) * 0.2 and scaffold_length < int(genome_size) * 1.05:
-                print('Set completed to True')
-                completed = True
-            else:
-                completed = False
+            # if scaffold_length > int(genome_size) * 0.2 and scaffold_length < int(genome_size) * 1.05:
+            #     print('Set completed to True')
+            #     completed = True
+            # else:
+            #     completed = False
 
     fasta_file = output_dir + '_' + str(counter[0]) + '/scaffolds.fasta'
     N50 = get_N50(fasta_file)
@@ -90,10 +90,10 @@ def parse_sspace_out(output_dir, counter, genome_size, intensity):
 
     counter[0] += 1
 
-    return number_of_scaffolds, counter, completed
+    return number_of_scaffolds, counter
 
 
-def run_sspace(short_reads, long_reads, output_dir, counter, genome_size,
+def run_sspace(short_reads, long_reads, output_dir, counter,
                path_to_SSPACE, intensity):
     """Run SSPACE scaffolder
 
@@ -111,8 +111,6 @@ def run_sspace(short_reads, long_reads, output_dir, counter, genome_size,
     output = output_dir + '_' + str(counter[0])
     os.mkdir(output)
     nanopore_reads = create_multi_fasta(long_reads, output)
-    print(nanopore_reads)
-    print(genome_size)
     # Command line arguments for SSPACE
     output = output_dir + '_' + str(counter[0])
     args = ['perl', path_to_SSPACE, '-c', short_reads, '-p', nanopore_reads,
@@ -123,7 +121,7 @@ def run_sspace(short_reads, long_reads, output_dir, counter, genome_size,
                                stdout=subprocess.PIPE)
     out, err = process.communicate()
 
-    number_of_scaffolds, counter, completed = parse_sspace_out(output_dir, counter, genome_size, intensity)
+    number_of_scaffolds, counter = parse_sspace_out(output_dir, counter, intensity)
 
     # # Test set-up
     # print("Fake run SSPACE...")
@@ -131,6 +129,6 @@ def run_sspace(short_reads, long_reads, output_dir, counter, genome_size,
     # counter += 1
     # completed = True
 
-    return number_of_scaffolds, counter, completed
+    return number_of_scaffolds, counter
 
 # number_of_scaffolds, counter = parse_sspace_out('test/', 0)
