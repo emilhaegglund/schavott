@@ -8,11 +8,11 @@ except:
     
 setup(name='schavott',
       version='0.1',
-      description='Scaffolding in real-time',
-      url='http://github.com/emilhaegglund/staellning',
+      description='Scaffolding and assembly in real-time',
+      url='http://github.com/emilhaegglund/schavott',
       author='Emil Haegglund',
       author_email = 'haegglund.emil@gmail.com',
-      scripts = ['bin/schavott'],
+      scripts = ['bin/schavott', 'bin/schavott-assembly'],
       packages = ['schavott'],
       install_requires=[
         'pyfasta',
