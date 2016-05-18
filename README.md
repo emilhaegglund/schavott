@@ -6,6 +6,7 @@ and MinION sequencing.
 
 Python-requirements
 -------------
+python (>=2.7, <3.0)
 Bokeh 0.11.0  
 Poretools 0.5.1  
 Watchdog  
