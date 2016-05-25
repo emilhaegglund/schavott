@@ -19,7 +19,13 @@ SSPACE-longreads
 Instructions
 ------------
 Download and install SSPACE-longreads from [here](http://www.baseclear.com/genomics/bioinformatics/basetools/SSPACE-longread).  
-Download the zip-file or use git to clone the repository. Install using `python setup.py install`.
+Download the zip-file or use git to clone the repository. Install using `python setup.py install`.  
+A [bokeh server](http://bokeh.pydata.org/en/latest/) must be running on the computer for the application to start, this is used to plot the result in a web browser.  
+
+To start a bokeh server, run the following command in the terminal:  
+`bokeh serve`   
+
+
 
 Example run - Schavott  
 `schavott --sspace_path path_to_sspace --watch pass_download_dir_for_metrichor --contig_file path_to_contig_file`  
