@@ -264,8 +264,8 @@ def parse_arguments():
     return args
 
 
-class Fast5Handler(PatternMatchingEventHandler):
-    patterns = ["*.fast5"]
+class FastaHandler(PatternMatchingEventHandler):
+    patterns = ["*.fasta"]
 
     def on_created(self, event):
         """ Write files to fasta and scaffold. """
@@ -282,37 +282,26 @@ class Fast5Handler(PatternMatchingEventHandler):
         self.write_to_fasta(event)
 
     def write_to_fasta(self, event):
-        """Convert fast5 to fasta if there is a 2D read
-           and scaffold.
+        """
         """
         global counter
         print(event.src_path)
-        fast5_file = poretools.Fast5File(event.src_path)
         # print("In write to fasta function")
         # print('Processing: ' + event.src_path)
         event_time = datetime.datetime.now().time()
         counter[7].append(event_time)
         counter[6].append(counter[6][-1] + 1)
-        update_reads(counter)
-        if fast5_file.has_2D():
-            # Get a filename for the fasta file
-            filename_list = list(event.src_path)
-            # Change file format from fast5 to fasta
-            filename_list[-1] = 'a'
-            filename = ''.join(filename_list)
-            seq = fast5_file.get_fastas('2D')
-            with open(filename, 'w') as fasta_file:
-                fasta_file.write(str(seq[0]))
-            list_of_files.append(filename)
-            counter[5].append(counter[5][-1] + 1)
-            print('Number of 2D reads (counter):' + str(counter[5][-1]))
-            print('Number of 2D reads:' + str(len(list_of_files)))
-            if args.run_mode == 'time':
-                counter = assembly_time(args, list_of_files,
-                                           counter)
-            else:
-                counter = assembly_reads(args, list_of_files,
-                                            counter)
+        update_reads(counter)      
+        list_of_files.append(event.src_path)
+        counter[5].append(counter[5][-1] + 1)
+        print('Number of 2D reads (counter):' + str(counter[5][-1]))
+        print('Number of 2D reads:' + str(len(list_of_files)))
+        if args.run_mode == 'time':
+            counter = assembly_time(args, list_of_files,
+                                       counter)
+        else:
+            counter = assembly_reads(args, list_of_files,
+                                        counter)
 
 def main():
     """ Main application. """
@@ -337,7 +326,7 @@ def main():
 
     # create and start observer
     observer1 = Observer()
-    observer1.schedule(Fast5Handler(args), path=args.watch)
+    observer1.schedule(FastaHandler(args), path=args.watch)
     observer1.start()
 
     while True:

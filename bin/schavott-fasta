@@ -7,7 +7,8 @@ import time
 import timeit
 import datetime
 
-from schavott.mini import run_mini
+from schavott.links import run_links
+from schavott.sspace import run_sspace, test_sspace
 from schavott.contig_info import get_N50, get_contigs, get_contig_sizes
 
 from watchdog.observers import Observer
@@ -22,7 +23,7 @@ import numpy as np
 from numpy import pi
 
 
-def assembly_time(args, list_of_files, counter):
+def scaffolding_time(args, list_of_files, counter):
     """Use timer to start scaffolding process.
 
     Args:
@@ -33,14 +34,13 @@ def assembly_time(args, list_of_files, counter):
     global tic
     toc = timeit.default_timer()
     if toc - tic > int(args.intensity):
-        scaffolds, counter = run_assembly(args, list_of_files, counter)
+        scaffolds, counter = run_scaffold(args, list_of_files, counter)
         print("Scaffolds: " + str(scaffolds))
         tic = timeit.default_timer()
 
     return counter
 
-
-def assembly_reads(args, list_of_files, counter):
+def scaffolding_reads(args, list_of_files, counter):
     """Use read counts to start scaffolding process.
 
     Args:
@@ -48,7 +48,7 @@ def assembly_reads(args, list_of_files, counter):
         list_of_files (list): List with filenames
     """
     if len(list_of_files) % int(args.intensity) == 0:
-        scaffolds, counter = run_assembly(args, list_of_files, counter)
+        scaffolds, counter = run_scaffold(args, list_of_files, counter)
         print("Scaffolds: " + str(scaffolds))
         # if scaffolds <= int(args.stop) or completed is True:
         #     print("In stop if")
@@ -57,7 +57,7 @@ def assembly_reads(args, list_of_files, counter):
     return counter
 
 
-def run_assembly(args, list_of_files, counter):
+def run_scaffold(args, list_of_files, counter):
     """Start scaffolding.
 
     Args:
@@ -66,11 +66,16 @@ def run_assembly(args, list_of_files, counter):
     Returns:
         number_of_scaffolds
     """
-    scaffolds, counter = run_mini(list_of_files,
-                                  args.output,
-                                  counter,
-                                  args.intensity)
-    update(counter)
+    if args.scaffolder == 'links':
+        scaffolds = run_links(args.contig_file, list_of_files, args.output)
+    elif args.scaffolder == 'sspace':
+        scaffolds, counter = run_sspace(args.contig_file, 
+                                                   list_of_files,
+                                                   args.output,
+                                                   counter,
+                                                   args.sspace_path,
+                                                   args.intensity)
+        update(counter)
     return scaffolds, counter
 
 
@@ -91,15 +96,15 @@ def bokeh_plots(counter):
     global source
     source = ColumnDataSource(dict(
         reads=counter[2],
-        scaffolds=counter[3],
-        n50=counter[1]
+        scaffolds=counter[1],
+        n50=counter[3]
     ))
-    # circle = calculate_circle(counter)
+    circle = calculate_circle(counter)
     global contig_src
-    contig_src = ColumnDataSource(dict(start=[0],
-                                       stop=[0],
-                                       colors=['red'],
-                                       contigs=['']))
+    contig_src = ColumnDataSource(dict(start=circle[0],
+                                       stop=circle[1],
+                                       colors=circle[2],
+                                       contigs = circle[3]))
     global read_src
     read_src = ColumnDataSource(dict(reads_created=counter[7],
                                      num_reads=counter[6]))
@@ -140,7 +145,7 @@ def n50(source, counter):
 
 def contig_numbers(source, counter):
     """Create contig number plot. """
-    plot = figure()
+    plot = figure(y_range=(0, counter[3][0]+counter[3][0]*0.1))
     plot.circle(x='reads', y='scaffolds', source=source, size=6)
     plot.line(x='reads', y='scaffolds', source=source)
     plot.title = 'Number of contigs'
@@ -200,16 +205,15 @@ def update(counter):
     new_data = dict(
         reads=[counter[2][-1]],
         scaffolds=[counter[3][-1]],
-        n50=[counter[1][-1]])
-
-
+        n50=[counter[1][-1]]
+        )
     contig_new_data = dict(
         start=circle[0],
         stop=circle[1],
         colors=circle[2],
-        contigs=circle[3])
-
-    source.stream(new_data)
+        contigs=circle[3] 
+        )
+    source.stream(new_data, 400)
     contig_src.remove('start')
     contig_src.remove('stop')
     contig_src.remove('colors')
@@ -222,9 +226,9 @@ def update(counter):
     print('Update plot')
 
 def update_reads(counter):
-    read_new_data = dict(num_reads=[counter[6][-1]],
-                    reads_created=[counter[7][-1]])
-    read_src.stream(read_new_data)
+    read_new_data = dict(num_reads=counter[6],
+                    reads_created=counter[7])
+    read_src.stream(read_new_data, 400)
 
 def stop():
     """ Stop sequencing.
@@ -241,10 +245,19 @@ def parse_arguments():
     Return:
         args: Object with command line arguments.
     """
-    parser = argparse.ArgumentParser(description='Genome assembly\
+    parser = argparse.ArgumentParser(description='Scaffold genomes\
                                                   in real time')
+    parser.add_argument('--scaffolder', '-s',
+                        choices=['links', 'sspace'],
+                        default='sspace',
+                        help='''Which scaffolder to use. Only SSPACE-Longreads\
+                        supported. [sspace]''')
+    parser.add_argument('--sspace_path', '-p',
+                        help='Path to SSPACE')
     parser.add_argument('--watch', '-w', required=True,
                         help='Directory to watch for fast5 files')
+    parser.add_argument('--contig_file', '-c', required=True,
+                        help='Path to contig file')
     parser.add_argument('--run_mode', '-r', default='reads',
                         choices=['time', 'reads'],
                         help='''Use timer or read count.\
@@ -256,6 +269,12 @@ def parse_arguments():
                         If run mode is time, scaffolding will run\
                         every i:th second.\
                         [100 reads]''')
+    # parser.add_argument('--stop', '-q', required=True,
+    #                     help='Stop MinION when this number of scaffolds\
+    #                     has been reached.')
+    # parser.add_argument('--genome_size', '-g', required=True,
+    #                     help='Stop MinION when a scaffold is within 10 of\
+    #                     thi value.')
     parser.add_argument('--output', '-o', default='schavott',
                         help='''Set output filename. (Defaut: schavott)''')
 
@@ -305,14 +324,53 @@ class Fast5Handler(PatternMatchingEventHandler):
                 fasta_file.write(str(seq[0]))
             list_of_files.append(filename)
             counter[5].append(counter[5][-1] + 1)
-            print('Number of 2D reads (counter):' + str(counter[5][-1]))
             print('Number of 2D reads:' + str(len(list_of_files)))
             if args.run_mode == 'time':
-                counter = assembly_time(args, list_of_files,
+                counter = scaffolding_time(args, list_of_files,
                                            counter)
             else:
-                counter = assembly_reads(args, list_of_files,
+                counter = scaffolding_reads(args, list_of_files,
                                             counter)
+
+class FastaHandler(PatternMatchingEventHandler):
+    patterns = ["*.fasta"]
+
+    def on_created(self, event):
+        """ Write files to fasta and scaffold. """
+        # while copying
+        
+        size1 = -1
+        while True:
+            size = os.path.getsize(event.src_path)
+            if size == size1:
+                break
+            else:
+                size1 = os.path.getsize(event.src_path)
+                time.sleep(0.1)
+        self.write_to_fasta(event)
+
+    def write_to_fasta(self, event):
+        """
+        """
+        global counter
+        print(event.src_path)
+        # print("In write to fasta function")
+        # print('Processing: ' + event.src_path)
+        event_time = datetime.datetime.now().time()
+        counter[7].append(event_time)
+        counter[6].append(counter[6][-1] + 1)
+        update_reads(counter)      
+        list_of_files.append(event.src_path)
+        counter[5].append(counter[5][-1] + 1)
+        print('Number of 2D reads (counter):' + str(counter[5][-1]))
+        print('Number of 2D reads:' + str(len(list_of_files)))
+        if args.run_mode == 'time':
+               counter = scaffolding_time(args, list_of_files,
+                                           counter)
+        else:
+            counter = scaffolding_reads(args, list_of_files,
+                                            counter)
+
 
 def main():
     """ Main application. """
@@ -320,24 +378,28 @@ def main():
     list_of_files = []
     global args
     args = parse_arguments()
+    print(args.run_mode)
     if args.run_mode == 'time':
         # Must use global timer.
         global tic
         tic = timeit.default_timer()
 
+    if args.scaffolder == 'sspace':
+        if not test_sspace(args.sspace_path):
+            sys.exit("Failed to find SSPACE")
+
     # Listen for Fast5 files in dir
     # Setup initial counter
     global counter
-    # counter = short_read_assembly(args.contig_file)
-    event_time = datetime.datetime.now().time()
-    counter = [0, [0], [0], [0], None, [0], [0], [event_time]]
+    counter = short_read_assembly(args.contig_file)
+    # counter = [0, N50_list, reads_list, scaffold_list, None]
 
     # start_bokeh_server()
     bokeh_plots(counter)
 
     # create and start observer
     observer1 = Observer()
-    observer1.schedule(Fast5Handler(args), path=args.watch)
+    observer1.schedule(FastaHandler(args), path=args.watch)
     observer1.start()
 
     while True:

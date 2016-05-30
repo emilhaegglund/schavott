@@ -12,7 +12,7 @@ setup(name='schavott',
       url='http://github.com/emilhaegglund/schavott',
       author='Emil Haegglund',
       author_email = 'haegglund.emil@gmail.com',
-      scripts = ['bin/schavott', 'bin/schavott-assembly'],
+      scripts = ['bin/schavott', 'bin/schavott-assembly', 'bin/schavott-assembly-fasta', 'bin/schavott-fasta'],
       packages = ['schavott'],
       install_requires=[
         'pyfasta',

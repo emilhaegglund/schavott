@@ -25,7 +25,7 @@ import pandas as pd
 # print('Args')
 # print(args)
 # subprocess.Popen(args)
-df = pd.read_csv('/scratch/emihag/data/raw/K2000295_FSC771_mkI_R73_20160317/downloads/times.csv',
+df = pd.read_csv('/mnt/walt_scratch_temp/emihag/data/raw/K2000295_FSC771_mkI_R73_20160317/downloads/times.csv',
                 sep="\t")
 df = df.sort_values(by='unix_timestamp_end')
 min_time = df['unix_timestamp_end'].min()
@@ -42,8 +42,8 @@ for i in range(len(time_list)):
     time_list[i] = time_diff
 
 
-from_path = '/scratch/emihag/data/raw/K2000295_FSC771_mkI_R73_20160317/downloads/'
-to_path = '/scratch/emihag/master-thesis/scripts/nanopore_scaffolding/data/'
+from_path = '/mnt/walt_scratch_temp/emihag/data/raw/K2000295_FSC771_mkI_R73_20160317/downloads/'
+to_path = '/scratch/emihag/schavott/data'
 files = os.listdir(from_path)
 # random.shuffle(files)
 counter = 1

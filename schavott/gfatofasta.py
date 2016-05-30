@@ -6,7 +6,9 @@ import argparse
 def gfatofasta(gfa_path, out_prefix):
 	""""""
 	fasta_sequences = read_gfa(gfa_path)
-	write_fasta(fasta_sequences, out_prefix)
+	fasta_path = write_fasta(fasta_sequences, out_prefix)
+
+	return fasta_path
 
 def insert_newlines(string, every=80):
     return '\n'.join(string[i:i+every] for i in xrange(0, len(string), every))
@@ -21,13 +23,15 @@ def read_gfa(gfa_path):
 	return fasta_sequences
 
 def write_fasta(fasta_sequences, out_prefix):
-	fasta_path = out_prefix + '.fasta'
+	fasta_path = out_prefix + '/assembly.fasta'
 	with open(fasta_path, 'w') as fasta_file:
 		for header in fasta_sequences:
 			fasta_header = '>' + header + '\n'
 			fasta_file.write(fasta_header)
 			fasta_sequence = insert_newlines(fasta_sequences[header]) + '\n'
 			fasta_file.write(fasta_sequence)
+
+	return fasta_path
 
 def parse_arguments():
 	parser = argparse.ArgumentParser(description='Convert GFA to Fasta')
