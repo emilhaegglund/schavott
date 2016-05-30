@@ -14,6 +14,7 @@ setup(name='schavott',
       author_email = 'haegglund.emil@gmail.com',
       scripts = ['bin/schavott', 'bin/schavott-assembly', 'bin/schavott-assembly-fasta', 'bin/schavott-fasta'],
       packages = ['schavott'],
+      requires=['python (>=2.7, <3.0)'],
       install_requires=[
         'pyfasta',
         'h5py>=2.2.0',
