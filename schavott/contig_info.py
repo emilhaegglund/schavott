@@ -6,7 +6,10 @@ import os
 def get_N50(path):
     """Return N50 value."""
     print(path)
+    print("In N50")
     contig_sizes = get_contig_size_list(path)
+    print("Contig sizes: " + str(len(contig_sizes)))
+
     if len(contig_sizes) == 0:
         return 0
     total_bases = sum(contig_sizes)
@@ -29,6 +32,7 @@ def get_contigs(path):
         print("Fasta file is empty")
         return 0
     try:
+        print("Try open fasta")
         f = pyfasta.Fasta(path)
     except pyfasta.fasta.FastaNotFound:
         print("Error: contig file does not exist")
@@ -42,6 +46,7 @@ def get_contig_sizes(path):
         print("Fasta file is empty")
         return {}
     try:
+        print("Tre open fasta")
         f = pyfasta.Fasta(path)
     except pyfasta.fasta.FastaNotFound:
         print("Error: contig file does not exist")
@@ -59,6 +64,7 @@ def get_contig_size_list(path):
         print("Fasta file is empty")
         return []
     try:
+        print("Try open fasta")
         f = pyfasta.Fasta(path)
     except pyfasta.fasta.FastaNotFound:
         print("Error: contig file does not exist")

@@ -29,7 +29,6 @@ def create_multi_fasta(long_reads, output):
                     else:
                         outfile.write(line + '\n')
 
-    reads = len(long_reads)
     return path
 
 
@@ -70,17 +69,16 @@ def run_mini(long_reads, output_dir, counter, intensity):
     fasta_file = create_multi_fasta(long_reads, output)
     paf_file = minimap(fasta_file)
     assembly_file = miniasm(fasta_file, paf_file)
-    gfatofasta.gfatofasta(assembly_file, output)
-    N50 = contig_info.get_N50(fasta_file)
+    fasta_output = gfatofasta.gfatofasta(assembly_file, output)
+    N50 = contig_info.get_N50(fasta_output)
     print('N50: ' + str(N50))
-    counter[4] = contig_info.get_contig_sizes(fasta_file)
-    number_of_scaffolds = contig_info.get_contigs(fasta_file)
+    counter[4] = contig_info.get_contig_sizes(fasta_output)
+    number_of_scaffolds = contig_info.get_contigs(fasta_output)
     print('Number of scaffolds: ' + str(number_of_scaffolds))
     counter[3].append(number_of_scaffolds)
     counter[1].append(int(N50))
-    counter[2].append(counter[5])
+    counter[2].append(counter[5][-1])
     counter[0] += 1
-    print(number_of_scaffolds)
-    print(counter)
-
+    with open(output_dir +  '_statistics.csv', 'a') as statistics:
+        statistics.write(str(counter[2][-1]) + ',' + str(number_of_scaffolds) + ',' + str(N50) + '\n') 
     return number_of_scaffolds, counter

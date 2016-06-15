@@ -25,6 +25,7 @@ import pandas as pd
 # print('Args')
 # print(args)
 # subprocess.Popen(args)
+
 # df = pd.read_csv('/mnt/walt_scratch_temp/emihag/data/raw/K2000295_FSC771_mkI_R73_20160317/downloads/times.csv',
 #                sep="\t")
 #df = df.sort_values(by='unix_timestamp_end')
@@ -45,6 +46,7 @@ import pandas as pd
 from_path = '/powervault/emihag/data/raw/K2000295_FSC771_mkI_R73_20160317/downloads/pass/'
 to_path = '/powervault/emihag/tmp/data/pass/'
 file_list = os.listdir(from_path)
+
 # random.shuffle(files)
 counter = 1
 for i, fast5 in enumerate(file_list):

@@ -86,7 +86,7 @@ def parse_sspace_out(output_dir, counter, intensity):
     counter[2].append(counter[5])
     
     with open(output_dir +  '_statistics.csv', 'a') as statistics:
-        statistics.write(str(counter[5]) + ',' + str(number_of_scaffolds) + ',' + str(N50) + '\n') 
+        statistics.write(str(counter[5][-1]) + ',' + str(number_of_scaffolds) + ',' + str(N50) + '\n') 
 
     counter[0] += 1
 
