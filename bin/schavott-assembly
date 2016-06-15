@@ -70,6 +70,7 @@ def run_assembly(args, list_of_files, counter):
                                   args.output,
                                   counter,
                                   args.intensity)
+    print(scaffolds, counter)
     update(counter)
     return scaffolds, counter
 

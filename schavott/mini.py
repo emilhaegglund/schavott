@@ -71,5 +71,16 @@ def run_mini(long_reads, output_dir, counter, intensity):
     paf_file = minimap(fasta_file)
     assembly_file = miniasm(fasta_file, paf_file)
     gfatofasta.gfatofasta(assembly_file, output)
-    print(contig_info.get_N50(output+'.fasta'))
-    print(contig_info.get_contigs(output+'.fasta'))
+    N50 = contig_info.get_N50(fasta_file)
+    print('N50: ' + str(N50))
+    counter[4] = contig_info.get_contig_sizes(fasta_file)
+    number_of_scaffolds = contig_info.get_contigs(fasta_file)
+    print('Number of scaffolds: ' + str(number_of_scaffolds))
+    counter[3].append(number_of_scaffolds)
+    counter[1].append(int(N50))
+    counter[2].append(counter[5])
+    counter[0] += 1
+    print(number_of_scaffolds)
+    print(counter)
+
+    return number_of_scaffolds, counter

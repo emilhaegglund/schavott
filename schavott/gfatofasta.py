@@ -18,6 +18,7 @@ def read_gfa(gfa_path):
 			line_list = line.split('\t')
 			if line_list[0] == 'S':
 				fasta_sequences[line_list[1]] = line_list[2]
+	print(len(fasta_sequences))
 	return fasta_sequences
 
 def write_fasta(fasta_sequences, out_prefix):

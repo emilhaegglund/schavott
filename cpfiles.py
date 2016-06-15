@@ -25,26 +25,26 @@ import pandas as pd
 # print('Args')
 # print(args)
 # subprocess.Popen(args)
-df = pd.read_csv('/scratch/emihag/data/raw/K2000295_FSC771_mkI_R73_20160317/downloads/times.csv',
-                sep="\t")
-df = df.sort_values(by='unix_timestamp_end')
-min_time = df['unix_timestamp_end'].min()
-df['time'] = df['unix_timestamp_end'] - min_time
-print(df['filename'])
-time_list = df['time'].tolist()
-file_list = df['filename'].tolist()
-print(file_list[0:15])
-prev_time = 0
-for i in range(len(time_list)):
-    cur_time = time_list[i]
-    time_diff = cur_time - prev_time
-    prev_time = time_list[i]
-    time_list[i] = time_diff
+# df = pd.read_csv('/mnt/walt_scratch_temp/emihag/data/raw/K2000295_FSC771_mkI_R73_20160317/downloads/times.csv',
+#                sep="\t")
+#df = df.sort_values(by='unix_timestamp_end')
+#min_time = df['unix_timestamp_end'].min()
+#df['time'] = df['unix_timestamp_end'] - min_time
+#print(df['filename'])
+#time_list = df['time'].tolist()
+#file_list = df['filename'].tolist()
+#print(file_list[0:15])
+#prev_time = 0
+#for i in range(len(time_list)):
+#    cur_time = time_list[i]
+#    time_diff = cur_time - prev_time
+#    prev_time = time_list[i]
+#    time_list[i] = time_diff
 
 
-from_path = '/scratch/emihag/data/raw/K2000295_FSC771_mkI_R73_20160317/downloads/'
-to_path = '/scratch/emihag/master-thesis/scripts/nanopore_scaffolding/data/'
-files = os.listdir(from_path)
+from_path = '/powervault/emihag/data/raw/K2000295_FSC771_mkI_R73_20160317/downloads/pass/'
+to_path = '/powervault/emihag/tmp/data/pass/'
+file_list = os.listdir(from_path)
 # random.shuffle(files)
 counter = 1
 for i, fast5 in enumerate(file_list):

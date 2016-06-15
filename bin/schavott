@@ -338,13 +338,13 @@ def main():
     list_of_files = []
     global args
     args = parse_arguments()
-    print(args.mode)
     if args.run_mode == 'time':
         # Must use global timer.
         global tic
         tic = timeit.default_timer()
 
     if args.scaffolder == 'sspace':
+    	print(args.sspace_path)
         if not test_sspace(args.sspace_path):
             sys.exit("Failed to find SSPACE")
 

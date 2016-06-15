@@ -1,10 +1,14 @@
 import pyfasta
 import sys
+import os
 
 
 def get_N50(path):
     """Return N50 value."""
+    print(path)
     contig_sizes = get_contig_size_list(path)
+    if len(contig_sizes) == 0:
+        return 0
     total_bases = sum(contig_sizes)
     half_size = total_bases/2
     N50 = 0
@@ -20,6 +24,10 @@ def get_N50(path):
 
 def get_contigs(path):
     """Return number of contigs."""
+        # If assembly fails
+    if os.stat(path).st_size == 0:
+        print("Fasta file is empty")
+        return 0
     try:
         f = pyfasta.Fasta(path)
     except pyfasta.fasta.FastaNotFound:
@@ -30,6 +38,9 @@ def get_contigs(path):
 
 def get_contig_sizes(path):
     """Return size of each contig."""
+    if os.stat(path).st_size == 0:
+        print("Fasta file is empty")
+        return {}
     try:
         f = pyfasta.Fasta(path)
     except pyfasta.fasta.FastaNotFound:
@@ -43,6 +54,10 @@ def get_contig_sizes(path):
 
 
 def get_contig_size_list(path):
+    # If assembly fails
+    if os.stat(path).st_size == 0:
+        print("Fasta file is empty")
+        return []
     try:
         f = pyfasta.Fasta(path)
     except pyfasta.fasta.FastaNotFound:
@@ -53,4 +68,4 @@ def get_contig_size_list(path):
         contig_sizes.append(len(f[keys]))
     contig_sizes.sort()
 
-    return(contig_sizes)
+    return contig_sizes
