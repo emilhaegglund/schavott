@@ -55,7 +55,6 @@ def parse_sspace_out(output_dir, counter, intensity):
         number_of_scaffolds (int): Number of scaffolds
             obtained when running SSPACE.
     """
-    print('Parse SSPACE output')
     file_path = output_dir + '_' + str(counter[0]) + '/scaffold_evidence.txt'
     with open(file_path, 'r') as result_file:
         content = result_file.readlines()
@@ -63,7 +62,7 @@ def parse_sspace_out(output_dir, counter, intensity):
     scaffolds = {}
     for line in content:
         if line[0] == '>':
-            print(line)
+            # print(line)
             scaffold = line.split('|')
             # scaffolds[scaffold[0][1:]] = None
             scaffold_length = scaffold[1]
@@ -83,7 +82,7 @@ def parse_sspace_out(output_dir, counter, intensity):
 
     # reads = counter[0] * int(intensity)
     counter[1].append(int(N50))
-    counter[2].append(counter[5])
+    counter[2].append(counter[5][-1])
     
     with open(output_dir +  '_statistics.csv', 'a') as statistics:
         statistics.write(str(counter[5][-1]) + ',' + str(number_of_scaffolds) + ',' + str(N50) + '\n') 
@@ -116,7 +115,7 @@ def run_sspace(short_reads, long_reads, output_dir, counter,
     args = ['perl', path_to_SSPACE, '-c', short_reads, '-p', nanopore_reads,
             '-i', '70', '-a', '1500', '-g' '-5000', '-b', output]
 
-    print("Run SSPACE")
+    #print("Run SSPACE")
     process = subprocess.Popen(args, stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE)
     out, err = process.communicate()

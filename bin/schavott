@@ -5,6 +5,7 @@ import os
 import poretools
 import time
 import timeit
+import curses
 import datetime
 
 from schavott.links import run_links
@@ -35,7 +36,7 @@ def scaffolding_time(args, list_of_files, counter):
     toc = timeit.default_timer()
     if toc - tic > int(args.intensity):
         scaffolds, counter = run_scaffold(args, list_of_files, counter)
-        print("Scaffolds: " + str(scaffolds))
+        # print("Scaffolds: " + str(scaffolds))
         tic = timeit.default_timer()
 
     return counter
@@ -49,7 +50,7 @@ def scaffolding_reads(args, list_of_files, counter):
     """
     if len(list_of_files) % int(args.intensity) == 0:
         scaffolds, counter = run_scaffold(args, list_of_files, counter)
-        print("Scaffolds: " + str(scaffolds))
+        # print("Scaffolds: " + str(scaffolds))
         # if scaffolds <= int(args.stop) or completed is True:
         #     print("In stop if")
         #     completed = stop()
@@ -75,7 +76,9 @@ def run_scaffold(args, list_of_files, counter):
                                                    counter,
                                                    args.sspace_path,
                                                    args.intensity)
-        update(counter)
+        if args.plot:
+            update(counter)
+        update_print(counter)
     return scaffolds, counter
 
 
@@ -96,8 +99,8 @@ def bokeh_plots(counter):
     global source
     source = ColumnDataSource(dict(
         reads=counter[2],
-        scaffolds=counter[1],
-        n50=counter[3]
+        scaffolds=counter[3],
+        n50=counter[1]
     ))
     circle = calculate_circle(counter)
     global contig_src
@@ -201,11 +204,10 @@ def update(counter):
     """
 
     circle = calculate_circle(counter)
-
     new_data = dict(
-        reads=[counter[2][-1]],
-        scaffolds=[counter[3][-1]],
-        n50=[counter[1][-1]]
+        reads=counter[2],
+        scaffolds=counter[3],
+        n50=counter[1]
         )
     contig_new_data = dict(
         start=circle[0],
@@ -223,19 +225,24 @@ def update(counter):
     contig_src.add([], name='colors')
     contig_src.add([], name='contigs')
     contig_src.stream(contig_new_data)
-    print('Update plot')
+    # print('Update plot')
 
 def update_reads(counter):
     read_new_data = dict(num_reads=counter[6],
                     reads_created=counter[7])
     read_src.stream(read_new_data, 400)
 
+def update_print(counter):
+    # print("2D reads: %i, Contigs: %i, N50: %i\r" % (counter[5][-1], counter[3][-1], counter[1][-1]))
+    sys.stdout.write("2D reads: %i, Contigs: %i, N50: %i\r" % (counter[5][-1], counter[3][-1], counter[1][-1]))
+    sys.stdout.flush()
+
 def stop():
     """ Stop sequencing.
     """
     global completed
     completed = True
-    print("Stop sequencing")
+    # print("Stop sequencing")
     return completed
 
 
@@ -269,6 +276,8 @@ def parse_arguments():
                         If run mode is time, scaffolding will run\
                         every i:th second.\
                         [100 reads]''')
+    parser.add_argument('--plot', help='Plot result in web-browser',
+    					action="store_true")
     # parser.add_argument('--stop', '-q', required=True,
     #                     help='Stop MinION when this number of scaffolds\
     #                     has been reached.')
@@ -305,14 +314,16 @@ class Fast5Handler(PatternMatchingEventHandler):
            and scaffold.
         """
         global counter
-        print(event.src_path)
+        # print(event.src_path)
         fast5_file = poretools.Fast5File(event.src_path)
         # print("In write to fasta function")
         # print('Processing: ' + event.src_path)
         event_time = datetime.datetime.now().time()
         counter[7].append(event_time)
         counter[6].append(counter[6][-1] + 1)
-        update_reads(counter)
+        if args.plot:
+            # print("Update plot reads")
+            update_reads(counter)
         if fast5_file.has_2D():
             # Get a filename for the fasta file
             filename_list = list(event.src_path)
@@ -324,7 +335,8 @@ class Fast5Handler(PatternMatchingEventHandler):
                 fasta_file.write(str(seq[0]))
             list_of_files.append(filename)
             counter[5].append(counter[5][-1] + 1)
-            print('Number of 2D reads:' + str(len(list_of_files)))
+            update_print(counter)
+            # print('Number of 2D reads:' + str(len(list_of_files)))
             if args.run_mode == 'time':
                 counter = scaffolding_time(args, list_of_files,
                                            counter)
@@ -354,9 +366,11 @@ def main():
     counter = short_read_assembly(args.contig_file)
     # counter = [0, N50_list, reads_list, scaffold_list, None]
 
-    # start_bokeh_server()
-    bokeh_plots(counter)
-
+    if args.plot:
+        bokeh_plots(counter)
+    
+    print("Start observer")
+    update_print(counter)
     # create and start observer
     observer1 = Observer()
     observer1.schedule(Fast5Handler(args), path=args.watch)
