@@ -18,7 +18,7 @@ setup(name='schavott',
       install_requires=[
         'pyfasta',
         'h5py>=2.2.0',
-        'bokeh',
+        'bokeh=0.11.1',
         'watchdog',
         'numpy',
         'poretools']
