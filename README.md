@@ -1,6 +1,5 @@
-Schavott v0.1.0
+Schavott v0.2.0
 ========
-*Emil Haegglund*  
 Applictions to monitor scaffolding or assembly of bacterial genomes in Real-time with MinION sequencing.  
 SSPACE-longreads or links can be used for scaffolding, and the minimap/miniasm pipeline can be used for assembly.  
 ![Schavott GUI](https://github.com/emilhaegglund/schavott/blob/master/Schavott_gui.png)
@@ -9,7 +8,7 @@ Python-requirements
 -------------
 Python (>=2.7, <3.0)  
 Bokeh 0.11.0  
-h5py 2.2.0
+h5py 2.2.0  
 Watchdog 0.8.3  
 pyfasta  
 
