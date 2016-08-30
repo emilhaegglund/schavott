@@ -1,249 +1,28 @@
 #!/usr/bin/env python
-import sys
 import argparse
-import os
-import poretools
-import time
-import timeit
-import curses
-import datetime
-
-from schavott.links import run_links
-from schavott.sspace import run_sspace, test_sspace
-from schavott.contig_info import get_N50, get_contigs, get_contig_sizes
-
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
+import time
+import subprocess
+import os
 
-from bokeh.io import hplot
-from bokeh.plotting import figure, curdoc
-from bokeh.client import push_session
-from bokeh.models import ColumnDataSource, HoverTool
-
-import numpy as np
-from numpy import pi
-
-
-def scaffolding_time(args, list_of_files, counter):
-    """Use timer to start scaffolding process.
-
-    Args:
-        args: Object with command line arguments.
-        list_of_files (list): List with filenames
-    Returns:
-    """
-    global tic
-    toc = timeit.default_timer()
-    if toc - tic > int(args.intensity):
-        scaffolds, counter = run_scaffold(args, list_of_files, counter)
-        # print("Scaffolds: " + str(scaffolds))
-        tic = timeit.default_timer()
-
-    return counter
-
-def scaffolding_reads(args, list_of_files, counter):
-    """Use read counts to start scaffolding process.
-
-    Args:
-        args: Object with command line arguments.
-        list_of_files (list): List with filenames
-    """
-    if len(list_of_files) % int(args.intensity) == 0:
-        scaffolds, counter = run_scaffold(args, list_of_files, counter)
-        # print("Scaffolds: " + str(scaffolds))
-        # if scaffolds <= int(args.stop) or completed is True:
-        #     print("In stop if")
-        #     completed = stop()
-
-    return counter
+from schavott.MainApp import MainApp
+from schavott.UI import UI
+from schavott.ReadData import ReadData
+from schavott.Scaffold import Scaffold
 
 
-def run_scaffold(args, list_of_files, counter):
-    """Start scaffolding.
+class Fast5Handler(PatternMatchingEventHandler):
+    patterns = ["*.fast5"]
 
-    Args:
-        args: Object with command line arguments.
-        list_of_files (list): List with filenames
-    Returns:
-        number_of_scaffolds
-    """
-    if args.scaffolder == 'links':
-        scaffolds = run_links(args.contig_file, list_of_files, args.output)
-    elif args.scaffolder == 'sspace':
-        scaffolds, counter = run_sspace(args.contig_file, 
-                                                   list_of_files,
-                                                   args.output,
-                                                   counter,
-                                                   args.sspace_path,
-                                                   args.intensity)
-        if args.plot:
-            update(counter)
-        update_print(counter)
-    return scaffolds, counter
+    def __init__(self, schavott):
+        PatternMatchingEventHandler.__init__(self)
+        self.schavott = schavott
 
-
-def short_read_assembly(path):
-    """ Get short read assembly data. """
-    n50 = get_N50(path)
-    short_read_contigs = get_contigs(path)
-    contig_sizes = get_contig_sizes(path)
-    start_time = datetime.datetime.now().time()
-    short_read_assembly_data = [0, [n50], [0],
-                                [short_read_contigs],
-                                contig_sizes, [0], [0], [start_time]]
-    return short_read_assembly_data
-
-
-def bokeh_plots(counter):
-    """ Setup bokeh plots. """
-    global source
-    source = ColumnDataSource(dict(
-        reads=counter[2],
-        scaffolds=counter[3],
-        n50=counter[1]
-    ))
-    circle = calculate_circle(counter)
-    global contig_src
-    contig_src = ColumnDataSource(dict(start=circle[0],
-                                       stop=circle[1],
-                                       colors=circle[2],
-                                       contigs = circle[3]))
-    global read_src
-    read_src = ColumnDataSource(dict(reads_created=counter[7],
-                                     num_reads=counter[6]))
-    # setup bokeh-plots
-    n50_plot = n50(source, counter)
-    contig_numbers_plot = contig_numbers(source, counter)
-    contig_circle_plot = contig_circle(contig_src)
-    read_time_plot = read_time(read_src, counter)
-    layout = hplot(contig_numbers_plot,
-                   n50_plot,
-                   contig_circle_plot,
-                   read_time_plot)
-    session = push_session(curdoc())
-    session.show()
-
-def read_time(read_src, counter):
-    """Plot number of reads over time."""
-    plot = figure(x_axis_type='datetime')
-    plot.circle(x='reads_created', y='num_reads', source=read_src, size=10, color='red')
-    plot.title = 'Reads'
-    plot.xaxis.axis_label = 'Reads'
-    plot.yaxis.axis_label = 'N50'
-
-    return plot
-
-
-def n50(source, counter):
-    """ Create N50 plot."""
-    plot = figure()
-    plot.circle(x='reads', y='n50', source=source, size=6, color='red')
-    plot.line(x='reads', y='n50', source=source, color='red')
-    plot.title = 'N50 values'
-    plot.xaxis.axis_label = 'Reads'
-    plot.yaxis.axis_label = 'N50'
-
-    return plot
-
-
-def contig_numbers(source, counter):
-    """Create contig number plot. """
-    plot = figure(y_range=(0, counter[3][0]+counter[3][0]*0.1))
-    plot.circle(x='reads', y='scaffolds', source=source, size=6)
-    plot.line(x='reads', y='scaffolds', source=source)
-    plot.title = 'Number of contigs'
-    plot.xaxis.axis_label = 'Reads'
-    plot.yaxis.axis_label = 'Contigs'
-
-    return plot
-
-
-def contig_circle(contig_src):
-    """ Create contig circle. """
-    hover = HoverTool(tooltips=[
-                ('Length', '@contigs')])
-    hover.point_policy = "follow_mouse"
-    plot = figure(x_axis_type=None, y_axis_type=None, tools=[hover])
-    plot.annular_wedge(x=0, y=0, inner_radius=0.5, outer_radius=0.7,
-                       start_angle='start', end_angle='stop', color='colors',
-                       alpha=0.9, source=contig_src)
-    plot.title = 'Contig lengths'
-    return plot
-
-
-def calculate_circle(counter):
-    total = 2*pi
-    contigs = []
-    for keys in counter[4]:
-        contigs.append(counter[4][keys])
-    cum_contig_length = sum(contigs)
-    contig_fractions = [float(contig)/cum_contig_length for contig in contigs]
-    contig_lengths = [contig * total for contig in contig_fractions]
-    x = np.random.random(size=counter[3][-1]) * 100
-    y = np.random.random(size=counter[3][-1]) * 100
-    colors = [
-        "#%02x%02x%02x" % (int(r), int(g), 100) for r, g in zip(50+2*x, 30+2*y)
-    ]
-
-    start = []
-    stop = []
-    start_pos = 0
-    total_length = 0
-    for i in range(len(contig_lengths)):
-        start.append(start_pos)
-        start_pos += contig_lengths[i]
-        total_length += contig_lengths[i]
-        stop.append(total_length)
-
-    circle = [start, stop, colors, contigs]
-    return circle
-
-
-def update(counter):
-    """ Stream new data to bokeh-plot.
-    """
-
-    circle = calculate_circle(counter)
-    new_data = dict(
-        reads=counter[2],
-        scaffolds=counter[3],
-        n50=counter[1]
-        )
-    contig_new_data = dict(
-        start=circle[0],
-        stop=circle[1],
-        colors=circle[2],
-        contigs=circle[3] 
-        )
-    source.stream(new_data, 400)
-    contig_src.remove('start')
-    contig_src.remove('stop')
-    contig_src.remove('colors')
-    contig_src.remove('contigs')
-    contig_src.add([], name='start')
-    contig_src.add([], name='stop')
-    contig_src.add([], name='colors')
-    contig_src.add([], name='contigs')
-    contig_src.stream(contig_new_data)
-    # print('Update plot')
-
-def update_reads(counter):
-    read_new_data = dict(num_reads=counter[6],
-                    reads_created=counter[7])
-    read_src.stream(read_new_data, 400)
-
-def update_print(counter):
-    # print("2D reads: %i, Contigs: %i, N50: %i\r" % (counter[5][-1], counter[3][-1], counter[1][-1]))
-    sys.stdout.write("2D reads: %i, Contigs: %i, N50: %i\r" % (counter[5][-1], counter[3][-1], counter[1][-1]))
-    sys.stdout.flush()
-
-def stop():
-    """ Stop sequencing.
-    """
-    global completed
-    completed = True
-    # print("Stop sequencing")
-    return completed
+    def on_created(self, event):
+        print("In on_created")
+        print(event.src_path)
+        self.schavott.open_read(event.src_path)
 
 
 def parse_arguments():
@@ -254,18 +33,25 @@ def parse_arguments():
     """
     parser = argparse.ArgumentParser(description='Scaffold genomes\
                                                   in real time')
+    parser.add_argument('--run_mode', '-r',
+                        choices=['scaffold', 'assembly'],
+                        default='scaffold',
+                        help='Run scaffolding or assembly')
     parser.add_argument('--scaffolder', '-s',
                         choices=['links', 'sspace'],
                         default='sspace',
-                        help='''Which scaffolder to use. Only SSPACE-Longreads\
-                        supported. [sspace]''')
+                        help='''Which scaffolder to use.''')
     parser.add_argument('--sspace_path', '-p',
-                        help='Path to SSPACE')
+                        help='Path to SSPACE (Only for scaffolding)')
+    parser.add_argument('--min_read_length', '-l', default=5000,
+                        help='''Minimum read length from MinION to use.''')
+    parser.add_argument('--min_quality', '-q', default=9,
+                        help='''Minimum quality for reads from MinION to use.''')
     parser.add_argument('--watch', '-w', required=True,
                         help='Directory to watch for fast5 files')
-    parser.add_argument('--contig_file', '-c', required=True,
-                        help='Path to contig file')
-    parser.add_argument('--run_mode', '-r', default='reads',
+    parser.add_argument('--contig_file', '-c',
+                        help='Path to contig file (Only for scaffolding)')
+    parser.add_argument('--trigger_mode', '-t', default='reads',
                         choices=['time', 'reads'],
                         help='''Use timer or read count.\
                         [reads]''')
@@ -277,7 +63,7 @@ def parse_arguments():
                         every i:th second.\
                         [100 reads]''')
     parser.add_argument('--plot', help='Plot result in web-browser',
-    					action="store_true")
+                        action="store_true")
     # parser.add_argument('--stop', '-q', required=True,
     #                     help='Stop MinION when this number of scaffolds\
     #                     has been reached.')
@@ -292,95 +78,25 @@ def parse_arguments():
     return args
 
 
-class Fast5Handler(PatternMatchingEventHandler):
-    patterns = ["*.fast5"]
-
-    def on_created(self, event):
-        """ Write files to fasta and scaffold. """
-        # while copying
-        
-        size1 = -1
-        while True:
-            size = os.path.getsize(event.src_path)
-            if size == size1:
-                break
-            else:
-                size1 = os.path.getsize(event.src_path)
-                time.sleep(0.1)
-        self.write_to_fasta(event)
-
-    def write_to_fasta(self, event):
-        """Convert fast5 to fasta if there is a 2D read
-           and scaffold.
-        """
-        global counter
-        # print(event.src_path)
-        fast5_file = poretools.Fast5File(event.src_path)
-        # print("In write to fasta function")
-        # print('Processing: ' + event.src_path)
-        event_time = datetime.datetime.now().time()
-        counter[7].append(event_time)
-        counter[6].append(counter[6][-1] + 1)
-        if args.plot:
-            # print("Update plot reads")
-            update_reads(counter)
-        if fast5_file.has_2D():
-            # Get a filename for the fasta file
-            filename_list = list(event.src_path)
-            # Change file format from fast5 to fasta
-            filename_list[-1] = 'a'
-            filename = ''.join(filename_list)
-            seq = fast5_file.get_fastas('2D')
-            with open(filename, 'w') as fasta_file:
-                fasta_file.write(str(seq[0]))
-            list_of_files.append(filename)
-            counter[5].append(counter[5][-1] + 1)
-            update_print(counter)
-            # print('Number of 2D reads:' + str(len(list_of_files)))
-            if args.run_mode == 'time':
-                counter = scaffolding_time(args, list_of_files,
-                                           counter)
-            else:
-                counter = scaffolding_reads(args, list_of_files,
-                                            counter)
-
 def main():
-    """ Main application. """
-    global list_of_files
-    list_of_files = []
-    global args
+    """Main application"""
     args = parse_arguments()
-    if args.run_mode == 'time':
-        # Must use global timer.
-        global tic
-        tic = timeit.default_timer()
-
-    if args.scaffolder == 'sspace':
-    	print(args.sspace_path)
-        if not test_sspace(args.sspace_path):
-            sys.exit("Failed to find SSPACE")
-
-    # Listen for Fast5 files in dir
-    # Setup initial counter
-    global counter
-    counter = short_read_assembly(args.contig_file)
-    # counter = [0, N50_list, reads_list, scaffold_list, None]
-
     if args.plot:
-        bokeh_plots(counter)
-    
-    print("Start observer")
-    update_print(counter)
-    # create and start observer
-    observer1 = Observer()
-    observer1.schedule(Fast5Handler(args), path=args.watch)
-    observer1.start()
+      subprocess.Popen(['bokeh', 'serve'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print("Argument Parsed")
+    observer = Observer()
+    print("Observer created")
+    schavott = MainApp(args)
+    print("Main app created")
+    observer.schedule(Fast5Handler(schavott), path=args.watch)
+    observer.start()
+    print("Observer started")
 
     while True:
         time.sleep(1)
-    print('Completed!')
-    observer1.stop()
-    observer1.join()
+    observer.stop()
+    observer.join()
+
 
 if __name__ == '__main__':
     main()
