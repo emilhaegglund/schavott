@@ -99,11 +99,11 @@ class UI(object):
         n50Plot = self._draw_n50Plot()
         contigCirclePlot = self._draw_contigCirclePlot()
         readPlot = self._draw_readCountPlot()
-        readHist = self._draw_readLenHistPlot()
+        #readHist = self._draw_readLenHistPlot()
 
         # Position plots
         layout = gridplot([[n50Plot, contigNrPlot],
-                          [contigCirclePlot, readPlot, readHist]])
+                          [contigCirclePlot, readPlot]])
         session = push_session(curdoc())
         session.show(layout)
 
@@ -113,7 +113,7 @@ class UI(object):
         plot.circle(x='reads', y='contigs',
                     source=self.contig_read_src, size=6)
         plot.line(x='reads', y='contigs', source=self.contig_read_src)
-        plot.xaxis.axis_label = 'Reads'
+        plot.xaxis.axis_label = '# Reads'
         plot.yaxis.axis_label = 'Contigs'
 
         return plot
@@ -123,7 +123,7 @@ class UI(object):
         plot.circle(x='reads', y='n50', source=self.contig_read_src,
                     size=6, color='red')
         plot.line(x='reads', y='n50', source=self.contig_read_src, color='red')
-        plot.xaxis.axis_label = 'Reads'
+        plot.xaxis.axis_label = '# Reads'
         plot.yaxis.axis_label = 'N50'
 
         return plot
@@ -138,10 +138,10 @@ class UI(object):
         return plot
 
     def _draw_readCountPlot(self):
-        plot = figure(x_axis_type='datetime', title='Reads')
-        plot.circle(x='readTime', y='nrReads', source=self.read_src, size=10, color='red')
-        plot.xaxis.axis_label = 'Reads'
-        plot.yaxis.axis_label = 'N50'
+        plot = figure(x_axis_type='datetime', title='Processed Reads')
+        plot.circle(x='readTime', y='nrReads', source=self.read_src, size=10, color='firebrick')
+        plot.xaxis.axis_label = 'Time (min)'
+        plot.yaxis.axis_label = '# Reads'
         return plot
 
     def _draw_readLenHistPlot(self):

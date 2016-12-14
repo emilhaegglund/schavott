@@ -18,7 +18,7 @@ class MainApp(object):
         # Will be added to argument list
         self.readLengths = []
         self.minQuality = args.min_quality
-        self.minLength = args.min_read_length
+        self.minLength = int(args.min_read_length)
         self._reset_timer()
         self._set_intensity(args.intensity)
         if self.runMode == 'scaffold':
@@ -30,8 +30,13 @@ class MainApp(object):
         else:
             self._setup_assembler()
         if self.plot:
+            print("Setup Plots")
             self._setup_plots()
-        os.mkdir('reads_fasta')
+        print(self.output + '/reads_fasta')
+        # Create output directories
+        if not os.path.isdir(self.output):
+            os.mkdir(self.output)
+            os.mkdir(self.output + '/reads_fasta')
 
     def open_read(self, filePath):
         """Open downloaded fasta"""
@@ -42,9 +47,10 @@ class MainApp(object):
             self.add_read(read)
             if read.get_twod():
                 self.readLengths.append(read.get_length())
+                print(read.get_length())
                 if read.get_quality() >= self.minQuality and read.get_length() >= self.minLength:
                     read.set_pass()
-                    with open('reads_fasta/' + root + '.fasta', 'w') as f:
+                    with open(self.output + '/reads_fasta/' + root + '.fasta', 'w') as f:
                         f.write(str(read.get_fasta()))
                     f.close()
             self.update_counter(read)
@@ -111,7 +117,7 @@ class MainApp(object):
             print('Error: intensity is not a valid number')
 
     def _setup_scaffolder(self, contig_file, sspace_path=None):
-            self.scaffolder = schavott.Scaffold.Scaffold(contig_file, 'np_reads.fasta',  self.scaffoldApp, self.output, sspace_path)
+            self.scaffolder = schavott.Scaffold.Scaffold(contig_file, self.output + '/np_reads.fasta',  self.scaffoldApp, self.output, sspace_path)
 
     def _setup_assembler(self):
         self.assembler = schavott.Assembler.Assembly()

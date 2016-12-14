@@ -13,7 +13,7 @@ class Scaffold(object):
         self.output = output
         self.npReads = path_to_np_reads
         self.scaffoldCounter = 1
-        self._set_contigPath(contigPath)
+        self.set_contigPath(contigPath)
         self.scaffoldApp = scaffolder
         if self.scaffoldApp == 'sspace':
             self.sspacePath = sspace_path
@@ -56,8 +56,9 @@ class Scaffold(object):
         self.nrReads = passCounter
 
     def run_sspace(self, passCounter):
-        outdir = self.output + '_' + str(self.scaffoldCounter)
+        outdir = self.output + '/' + str(self.scaffoldCounter)
         os.mkdir(outdir)
+        self._create_single_fasta()
         # Run SSPACE without alignment step
         args = ['perl', self.sspacePath, '-c', self.contigPath,
                 '-p', self.npReads, '-i', '70', '-a', '1500', '-g' '-5000',
@@ -65,6 +66,7 @@ class Scaffold(object):
 
         process = subprocess.Popen(args, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
+
         out, err = process.communicate()
 
         fasta = outdir + '/scaffolds.fasta' 
@@ -87,7 +89,7 @@ class Scaffold(object):
             print('Error: ' + str(path) + ' does not appear to exist')
             sys.exit(0)
 
-    def _set_contigPath(self, contigPath):
+    def set_contigPath(self, contigPath):
         """Try to set the path for contig file."""
         try:
             open(contigPath, 'r')
@@ -95,6 +97,10 @@ class Scaffold(object):
         except IOError:
             print('Error: ' + str(contigPath) + ' does not appear to exist')
             sys.exit(0)
+        except TypeError:
+            print('Error: No contig file passed')
+            sys.exit(0)
+
 
     def _get_N50(self, path):
         """Calculate N50 value for fasta file."""
@@ -144,11 +150,20 @@ class Scaffold(object):
     def _create_fof(self):
         """Create fof-file for links"""
         self.fof = self.output + '.fof'
-        path = 'reads_fasta'
+        path = self.output + '/reads_fasta'
         files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
         with open(self.fof, 'w') as fof_file:
             for item in files:
                 fof_file.write(path + '/' + item + '\n')
+
+    def _create_single_fasta(self):
+        path = self.output + '/reads_fasta'
+        files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+        with open(self.npReads, 'w') as fasta_multi:
+            for item in files:
+                with open(path + '/' + item, 'r') as fasta_single:
+                    lines = fasta_single.readlines()
+                    fasta_multi.writelines(lines)
 
     def _test_links(self):
         """Test LINKS."""

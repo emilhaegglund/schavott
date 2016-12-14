@@ -47,7 +47,7 @@ class ReadData(object):
             
     def set_fasta(self):
         if self.twod:
-            raw_fasta = self.fastq.split('\\n')[:2]
+            raw_fasta = self.fastq.split('\n')[:2]
             header = '>' + raw_fasta[0][3:] + '\n'
             seq = raw_fasta[1] + '\n'
             self.fasta = header + seq
@@ -59,7 +59,7 @@ class ReadData(object):
             startSample = self._fast5['Raw']['Reads'][key].attrs['start_time']
 
         self.startTime = datetime.datetime.fromtimestamp(int(expStartTime) + float(startSample)/samplingRate)
-        self.startTime = datetime.datetime.now().time()
+        #self.startTime = datetime.datetime.now().time()
 
     def set_quality(self):
         if self.twod:
