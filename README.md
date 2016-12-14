@@ -1,15 +1,15 @@
-Schavott v0.1.0
+Schavott v0.2.0
 ========
-*Emil Haegglund*  
+[![bioconda-badge](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io)  
 Applictions to monitor scaffolding or assembly of bacterial genomes in Real-time with MinION sequencing.  
-SSPACE-longreads is used for scaffolding, and the minimap/miniasm pipeline is used for assembly.  
-![Schavott GUI](https://github.com/emilhaegglund/schavott/Schavott_gui.png)
+SSPACE-longreads or links can be used for scaffolding, and the minimap/miniasm pipeline can be used for assembly.  
+![Schavott GUI](https://github.com/emilhaegglund/schavott/blob/master/Schavott_gui.png)
 
 Python-requirements
 -------------
 Python (>=2.7, <3.0)  
 Bokeh 0.11.0  
-h5py 2.2.0
+h5py 2.2.0  
 Watchdog 0.8.3  
 pyfasta  
 
@@ -76,3 +76,11 @@ Set output filename. (Defaut: schavott)
   
 `--plot`  
 Show bokeh GUI in web-browser, this require a bokeh server to run.
+
+Test run using old MinION data
+------------------------------
+It is possible to test the application using already sequenced data. To do this, the time-information and the path to the fast5-files must be extracted. To do this, run [poretools](https://github.com/arq5x/poretools) times on the folder containing the fast5-filesvim  ´poretools times path/to/fast5-dir > times.csv`. In a second terminal start the Schavott application using the previously described commands, and set the watch directory to target_dir. Next the move_fast5.py script is run to simulate the creation of new fast5-files in the target directory, files are copied from the fast5-files source directory to the target directory using the time information in the fast5-files.
+
+```
+python move_fast5.py times.csv target_dir/
+```
