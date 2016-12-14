@@ -79,7 +79,8 @@ Show bokeh GUI in web-browser, this require a bokeh server to run.
 
 Test run using old MinION data
 ------------------------------
-It is possible to test the application using already sequenced data. To do this, the time-information and the path to the fast5-files must be extracted. To do this, run [poretools](https://github.com/arq5x/poretools) times on the folder containing the fast5-filesvim  ´poretools times path/to/fast5-dir > times.csv`. In a second terminal start the Schavott application using the previously described commands, and set the watch directory to target_dir. Next the move_fast5.py script is run to simulate the creation of new fast5-files in the target directory, files are copied from the fast5-files source directory to the target directory using the time information in the fast5-files.
+It is possible to test the application using already sequenced data. To do this, the time-information and the path to the fast5-files must be extracted. To do this, run [poretools](https://github.com/arq5x/poretools) times on the folder containing the fast5-filesvim  `poretools times path/to/fast5-dir > times.csv`.  
+In a second terminal start the Schavott application using the previously described commands, and set the watch directory to target_dir. Next the move_fast5.py script is run to simulate the creation of new fast5-files in the target directory, files are copied from the fast5-files source directory to the target directory using the time information in the fast5-files.
 
 ```
 python move_fast5.py times.csv target_dir/
