@@ -1,14 +1,14 @@
-Schavott v0.2.0
+Schavott v0.3.0
 ========
 [![bioconda-badge](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io)  
 Applictions to monitor scaffolding or assembly of bacterial genomes in Real-time with MinION sequencing.  
 SSPACE-longreads or links can be used for scaffolding, and the minimap/miniasm pipeline can be used for assembly.  
-![Schavott GUI](https://github.com/emilhaegglund/schavott/blob/master/Schavott_gui.png)
+![Schavott GUI](https://github.com/emilhaegglund/schavott/blob/master/gui.png)
 
 Python-requirements
 -------------
 Python (>=2.7, <3.0)  
-Bokeh 0.11.0  
+Bokeh  
 h5py 2.2.0  
 Watchdog 0.8.3  
 pyfasta  
