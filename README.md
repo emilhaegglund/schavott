@@ -27,7 +27,6 @@ To start a bokeh server, run the following command in the terminal:
 `bokeh serve`   
 
 
-
 Example run  
 SSPACE-longreads  
 `schavott --scaffolder sspace_path path_to_sspace --watch pass_download_dir_for_metrichor --contig_file path_to_contig_file`  
@@ -86,5 +85,7 @@ It is possible to test the application using already sequenced data. To do this,
 In a second terminal start the Schavott application using the previously described commands, and set the watch directory to target_dir. Next the move_fast5.py script is run to simulate the creation of new fast5-files in the target directory, files are copied from the fast5-files source directory to the target directory using the time information in the fast5-files.
 
 ```
-python move_fast5.py times.csv target_dir/
+python move_fast5.py times.csv target_dir/ real-time
 ```
+
+If you want to speed things up when testing, you could always change `real-time` to `fast-forward`or `super-sonic`.
