@@ -17,7 +17,6 @@ class ReadData(object):
         self.close_read()
 
     def open_read(self, path):
-        print("In open_read")
         try:
             self._fast5 = h5py.File(path)
         except IOError:
@@ -31,7 +30,6 @@ class ReadData(object):
     
         try:
             self._fast5['Analyses']['Basecall_2D_000']['BaseCalled_2D']
-            print('2D')
             self.twod = True
         except:
             print('1D')
@@ -39,7 +37,7 @@ class ReadData(object):
     def set_length(self):
         if self.twod:
             self.length = self._fast5['Analyses']['Basecall_2D_000']['Summary']['basecall_2d'].attrs['sequence_length']
-            print('Read length: ' + str(self.length))
+            #print('Read length: ' + str(self.length))
 
     def set_fastq(self):
         if self.twod:
@@ -57,14 +55,14 @@ class ReadData(object):
         samplingRate = self._fast5['UniqueGlobalKey']['channel_id'].attrs['sampling_rate']
         for key in self._fast5['Raw']['Reads'].keys():
             startSample = self._fast5['Raw']['Reads'][key].attrs['start_time']
-
-        self.startTime = datetime.datetime.fromtimestamp(int(expStartTime) + float(startSample)/samplingRate)
+            durationSample = self._fast5['Raw']['Reads'][key].attrs['duration']
+        self.startTime = datetime.datetime.fromtimestamp(int(expStartTime) + float(startSample)/samplingRate + float(durationSample)/samplingRate)
         #self.startTime = datetime.datetime.now().time()
 
     def set_quality(self):
         if self.twod:
             self.quality = self._fast5['Analyses']['Basecall_2D_000']['Summary']['basecall_2d'].attrs['mean_qscore']
-            print('Read quality:' + str(self.quality))
+            #print('Read quality:' + str(self.quality))
 
     def set_pass(self):
         self.passQuality = True

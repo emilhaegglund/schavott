@@ -4,45 +4,40 @@ import os
 import pyfasta
 
 class Assembly():
-    def __init__(self):
+    def __init__(self, output, path_to_np_reads):
         self.nrReads = 0
         self.assemblyCounter = 1
         self.nrContigs = 0
         self.N50 = 0
         self.contig_size_dict = {}
+        self.output = output
+        self.npReads = path_to_np_reads
 
-    def miniasm(self, path_to_np_reads):
+    def miniasm(self):
         """Run miniasm."""
-        print('Run miniasm')
-        args = ['miniasm', '-f', path_to_np_reads, self.paf_path]
+        args = ['miniasm', '-f', self.npReads, self.paf_path]
         process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         out, err = process.communicate()
-        print('Write assembly to file')
-        self.assembly_path = 'assembly.gfa'
+        self.assembly_path = os.path.join(self.output, 'assembly.gfa')
         with open(self.assembly_path, 'w') as assembly_file:
             assembly_file.write(str(out))
-        print('Return assembly')
 
-    def minimap(self, path_to_np_reads):
+    def minimap(self):
         """Run minimap"""
-        print('Run minimap')
-        args = ['minimap', '-x', 'ava10k', '-t', '12', path_to_np_reads, path_to_np_reads]
+        args = ['minimap', '-x', 'ava10k', '-t', '12', self.npReads, self.npReads]
         process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         out, err = process.communicate()
-        print(out)
-        print(err)
-        print('Write paf-file')
-        self.paf_path = 'out.paf'
+        self.paf_path = os.path.join(self.output, 'out.paf')
         with open(self.paf_path, 'w') as paf_file:
             paf_file.write(str(out))
-        print('Return paf-file')
 
-    def run_mini(self, path_to_np_reads, output, passCounter):
+    def run_mini(self, passCounter):
         """Run minimap and miniasm."""
-        new_folder  =  output + '_' + str(self.assemblyCounter)
+        new_folder  =  os.path.join(self.output, str(self.assemblyCounter))
         os.mkdir(new_folder)
-        self.minimap(path_to_np_reads)
-        self.miniasm(path_to_np_reads)
+        self._create_single_fasta()
+        self.minimap()
+        self.miniasm()
         fasta_output = schavott.gfatofasta.gfatofasta(self.assembly_path, new_folder)
         self.assemblyCounter += 1
         self.nrReads = passCounter
@@ -72,18 +67,17 @@ class Assembly():
                 break
 
         self.N50 = N50
+        print("N50: " + str(self.N50))
 
 
     def _get_NrContigs(self, path):
         """Find the number of contigs in the fasta file."""
         try:
-          f = pyfasta.Fasta(path)
-          counter = 0
-          for header in f:
-            counter += 1
-          self.nrContigs = counter
+            f = pyfasta.Fasta(path)
+            self.nrContigs = len(f)
+            print("Contigs: " + str(self.nrContigs))
         except ValueError:
-          self.nrContigs = 0
+            self.nrContigs = 0
 
     def _contig_size_dict(self, path):
         """Find the distribution of contig sizes."""
@@ -107,3 +101,12 @@ class Assembly():
           self.contig_sizes.sort()
         except ValueError:
           self.contig_sizes = []
+
+    def _create_single_fasta(self):
+        path = os.path.join(self.output, 'reads_fasta')
+        files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+        with open(self.npReads, 'w') as fasta_multi:
+            for item in files:
+                with open(path + '/' + item, 'r') as fasta_single:
+                    lines = fasta_single.readlines()
+                    fasta_multi.writelines(lines)

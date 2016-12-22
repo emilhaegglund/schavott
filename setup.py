@@ -7,7 +7,7 @@ except:
 
     
 setup(name='schavott',
-      version='0.2',
+      version='0.3',
       description='Scaffolding and assembly in real-time',
       url='http://github.com/emilhaegglund/schavott',
       author='Emil Haegglund',
@@ -23,5 +23,5 @@ setup(name='schavott',
         'watchdog',
         'numpy'],
       keywords = ['MinION-sequencing', 'Bioinformatics', 'Real-time'],
-      download_url = 'https://github.bom/emilhaegglund/schavott/tarball/0.1'
+      download_url = 'https://github.bom/emilhaegglund/schavott/tarball/0.3'
       )

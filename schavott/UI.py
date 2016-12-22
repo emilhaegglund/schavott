@@ -1,9 +1,10 @@
 from bokeh.io import gridplot
 from bokeh.plotting import figure, curdoc
 from bokeh.client import push_session
-from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.models import ColumnDataSource, HoverTool, NumeralTickFormatter
 from math import pi
 import numpy as np
+import sys
 
 class UI(object):
     """Graphical UI for schavott"""
@@ -104,28 +105,41 @@ class UI(object):
         # Position plots
         layout = gridplot([[n50Plot, contigNrPlot],
                           [contigCirclePlot, readPlot]])
-        session = push_session(curdoc())
-        session.show(layout)
+        try:
+            session = push_session(curdoc())
+            session.show(layout)
+        except IOError:
+            sys.exit("No bokeh server is running on this host")
 
     def _draw_contigNrPlot(self, scaffolder):
-        plot = figure(y_range=(0,
-                      scaffolder.nrContigs + scaffolder.nrContigs * 0.1), title='Number of contigs')
+        plot = figure(title='Number of contigs')
         plot.circle(x='reads', y='contigs',
-                    source=self.contig_read_src, size=6)
-        plot.line(x='reads', y='contigs', source=self.contig_read_src)
+                    source=self.contig_read_src, size=10)
+        plot.line(x='reads', y='contigs', line_width=4, source=self.contig_read_src)
         plot.xaxis.axis_label = '# Reads'
         plot.yaxis.axis_label = 'Contigs'
+        plot.yaxis.axis_label_text_font_size = '14pt'
+        plot.xaxis.axis_label_text_font_size = '14pt'
+        plot.yaxis.major_label_text_font_size = '14pt'
+        plot.xaxis.major_label_text_font_size = '14pt'
+        plot.title.text_font_size = '16pt'
 
         return plot
 
     def _draw_n50Plot(self):
         plot = figure(title='N50 Values')
         plot.circle(x='reads', y='n50', source=self.contig_read_src,
-                    size=6, color='red')
-        plot.line(x='reads', y='n50', source=self.contig_read_src, color='red')
+                    size=10, color='red')
+        plot.line(x='reads', y='n50', line_width=4, source=self.contig_read_src, color='red')
         plot.xaxis.axis_label = '# Reads'
         plot.yaxis.axis_label = 'N50'
-
+        plot.yaxis.axis_label_text_font_size = '14pt'
+        plot.xaxis.axis_label_text_font_size = '14pt'
+        plot.yaxis.major_label_text_font_size = '14pt'
+        plot.xaxis.major_label_text_font_size = '14pt'
+        plot.yaxis[0].formatter = NumeralTickFormatter(format='0.00a')
+        plot.title.text_font_size = '16pt'
+        
         return plot
 
     def _draw_contigCirclePlot(self):
@@ -135,6 +149,12 @@ class UI(object):
         plot.annular_wedge(x=0, y=0, inner_radius=0.5, outer_radius=0.7,
                            start_angle='start', end_angle='stop',
                            color='colors', alpha=0.9, source=self.contig_dist_src)
+        plot.yaxis.axis_label_text_font_size = '14pt'
+        plot.xaxis.axis_label_text_font_size = '14pt'
+        plot.yaxis.major_label_text_font_size = '14pt'
+        plot.xaxis.major_label_text_font_size = '14pt'
+        plot.title.text_font_size = '16pt'
+
         return plot
 
     def _draw_readCountPlot(self):
@@ -142,6 +162,12 @@ class UI(object):
         plot.circle(x='readTime', y='nrReads', source=self.read_src, size=10, color='firebrick')
         plot.xaxis.axis_label = 'Time (min)'
         plot.yaxis.axis_label = '# Reads'
+        plot.yaxis.axis_label_text_font_size = '14pt'
+        plot.xaxis.axis_label_text_font_size = '14pt'
+        plot.yaxis.major_label_text_font_size = '14pt'
+        plot.xaxis.major_label_text_font_size = '14pt'
+        plot.title.text_font_size = '16pt'
+
         return plot
 
     def _draw_readLenHistPlot(self):

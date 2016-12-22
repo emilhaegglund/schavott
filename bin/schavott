@@ -20,8 +20,6 @@ class Fast5Handler(PatternMatchingEventHandler):
         self.schavott = schavott
 
     def on_created(self, event):
-        print("In on_created")
-        print(event.src_path)
         self.schavott.open_read(event.src_path)
 
 
@@ -64,12 +62,6 @@ def parse_arguments():
                         [100 reads]''')
     parser.add_argument('--plot', help='Plot result in web-browser',
                         action="store_true")
-    # parser.add_argument('--stop', '-q', required=True,
-    #                     help='Stop MinION when this number of scaffolds\
-    #                     has been reached.')
-    # parser.add_argument('--genome_size', '-g', required=True,
-    #                     help='Stop MinION when a scaffold is within 10 of\
-    #                     thi value.')
     parser.add_argument('--output', '-o', default='schavott',
                         help='''Set output filename. (Defaut: schavott)''')
 
@@ -81,8 +73,6 @@ def parse_arguments():
 def main():
     """Main application"""
     args = parse_arguments()
-    if args.plot:
-      subprocess.Popen(['bokeh', 'serve'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print("Argument Parsed")
     observer = Observer()
     print("Observer created")

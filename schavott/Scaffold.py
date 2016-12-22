@@ -26,37 +26,33 @@ class Scaffold(object):
         self._contig_size_dict(self.contigPath)
 
     def run_scaffold(self, passCounter):
-        print('In run scaffold')
         if self.scaffoldApp == 'sspace':
             self.run_sspace(passCounter)
         elif self.scaffoldApp == 'links':
-            print('In elif links')
             self.run_links(passCounter)
 
     def run_links(self, passCounter):
         """Run LINKS"""
-        print('In run LINKS')
-        base_name  = self.output + '_' + str(self.scaffoldCounter)
+        outdir  = os.path.join(self.output, str(self.scaffoldCounter))
+        os.mkdir(outdir)
+        base_name = os.path.join(outdir, 'links')
         self._create_fof()
-        bloom_filter_file = self.output + '_1.bloom'
         if self.scaffoldCounter == 1:
-            args = ['LINKS', '-f', self.contigPath, '-s', self.fof, '-b', base_name, '-d', '1000', '-k', '10']
+            args = ['LINKS', '-f', self.contigPath, '-s', self.fof, '-b', base_name, '-d', '8000', '-k', '10', '-x', '1']
         else:
             #Use bloom filter created in the first scaffold attempt. 
-            args = ['LINKS', '-f', self.contigPath, '-s', self.fof, '-b', base_name, '-d', '1000', '-k', '10', '-r', bloom_filter_file]
+            args = ['LINKS', '-f', self.contigPath, '-s', self.fof, '-b', base_name, '-d', '8000', '-k', '10', '-x', '1']
 
         process = subprocess.Popen(args, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
         out, err = process.communicate()
-        print(err)
-        fasta = base_name  + '.scaffolds.fa'
-        print(fasta)
+        fasta = os.path.join(outdir, 'links.scaffolds.fa')
         self.scaffoldCounter += 1
         self.parse_fasta(fasta)
         self.nrReads = passCounter
 
     def run_sspace(self, passCounter):
-        outdir = self.output + '/' + str(self.scaffoldCounter)
+        outdir = os.path.join(self.output, str(self.scaffoldCounter))
         os.mkdir(outdir)
         self._create_single_fasta()
         # Run SSPACE without alignment step
@@ -119,6 +115,7 @@ class Scaffold(object):
                 break
 
         self.N50 = N50
+        print("N50: " + str(self.N50))
 
 
     def _get_NrContigs(self, path):
@@ -128,6 +125,7 @@ class Scaffold(object):
         for header in f:
             counter += 1
         self.nrContigs = counter
+        print("Contigs: " + str(self.nrContigs))
 
 
     def _contig_size_dict(self, path):
@@ -149,8 +147,8 @@ class Scaffold(object):
 
     def _create_fof(self):
         """Create fof-file for links"""
-        self.fof = self.output + '.fof'
-        path = self.output + '/reads_fasta'
+        self.fof = os.path.join(self.output,'np_reads.fof')
+        path = os.path.join(self.output, 'reads_fasta')
         files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
         with open(self.fof, 'w') as fof_file:
             for item in files:

@@ -7,12 +7,13 @@ import time
 import shutil
 
 
-if len(sys.argv) != 3:
-    print("Usage: move_fast5.py times.csv target_dir")
+if len(sys.argv) != 4:
+    print("Usage: move_fast5.py times.csv target_dir {real-time, fast-forward, super-sonic}")
     sys.exit()
 
 time_file = sys.argv[1]
 output_path = sys.argv[2]
+speed = sys.argv[3]
 
 # Read the time file generated with poretools time.
 times = pd.read_csv(time_file, sep='\t')
@@ -31,7 +32,12 @@ prev_time = 0
 print("Start copying files to " + output_path)
 for i, next_time in enumerate(list(times['moveTimes'])):
     move_time = next_time - prev_time
-    time.sleep(move_time)
+    if speed == 'real-time':
+        time.sleep(move_time)
+    elif speed == 'fast-forward':
+        time.sleep(1)
+    elif speed == 'super-sonic':
+        time.sleep(0.1)
     print('Copy ' + str(path[i]))
     shutil.copy(path[i], output_path)
     prev_time = move_time

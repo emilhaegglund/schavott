@@ -1,5 +1,7 @@
 import timeit
 import os
+import sys
+import glob
 import schavott.ReadData
 import schavott.UI
 import schavott.Scaffold
@@ -21,6 +23,8 @@ class MainApp(object):
         self.minLength = int(args.min_read_length)
         self._reset_timer()
         self._set_intensity(args.intensity)
+        
+        # Create scaffold or assembly object
         if self.runMode == 'scaffold':
             self.scaffoldApp = args.scaffolder
             if self.scaffoldApp == 'sspace':
@@ -29,17 +33,26 @@ class MainApp(object):
                 self._setup_scaffolder(args.contig_file)
         else:
             self._setup_assembler()
+
+        # Create plots
         if self.plot:
-            print("Setup Plots")
             self._setup_plots()
-        print(self.output + '/reads_fasta')
+        
         # Create output directories
-        if not os.path.isdir(self.output):
+        if os.path.isdir(self.output):
+            if os.listdir(self.output) == ['reads_fasta']:
+                pass
+            elif os.listdir(self.output) == []:
+                os.mkdir(os.path.join(self.output, 'reads_fasta'))
+            else:
+                sys.exit("Output directory contains something, use an empty dir")
+        else:
             os.mkdir(self.output)
-            os.mkdir(self.output + '/reads_fasta')
+            os.mkdir(os.path.join(self.output, 'reads_fasta'))
 
     def open_read(self, filePath):
-        """Open downloaded fasta"""
+        """Open downloaded fast5"""
+        # Try to read fast5 file.
         try:
             head, tail = os.path.split(filePath)
             root, ext = os.path.splitext(tail)
@@ -47,18 +60,15 @@ class MainApp(object):
             self.add_read(read)
             if read.get_twod():
                 self.readLengths.append(read.get_length())
-                print(read.get_length())
                 if read.get_quality() >= self.minQuality and read.get_length() >= self.minLength:
                     read.set_pass()
-                    with open(self.output + '/reads_fasta/' + root + '.fasta', 'w') as f:
+                    with open(os.path.join(self.output, "reads_fasta", root) + '.fasta', 'w') as f:
                         f.write(str(read.get_fasta()))
                     f.close()
             self.update_counter(read)
-            print("passCounter: " + str(self.passCounter))
-            print("failCounter: " + str(self.failCounter))
-            print("readQue length: " + str(len(self.readQue)))
-            print("timer: " + str(timeit.default_timer() - self.timer))
-            print("Reads not possible to open: " + str(len(self.readQue)))
+            #print("PassCounter: " + str(self.passCounter))
+            #print("FailCounter: " + str(self.failCounter))
+            #print("Reads not possible to open: " + str(len(self.readQue)))
         except AttributeError:
             self.add_to_readQue(filePath)
 
@@ -84,26 +94,25 @@ class MainApp(object):
         self.readQue.append(filePath)
 
     def run_scaffold(self):
-        print(self.intensity)
         if self.passCounter % int(self.intensity) == 0 and \
            self.triggerMode == 'reads':
                 if self.runMode== 'scaffold':
-                    print("Run scaffold")
+                    print("Scaffolding")
                     self.scaffolder.run_scaffold(self.passCounter)
                     self.UI.update_scaffold_plots(self.scaffolder)
                 else:
-                    self.assembler.run_mini('np_reads.fasta', self.output,
-                                                self.passCounter)
+                    print("Assembly")
+                    self.assembler.run_mini(self.passCounter)
                     self.UI.update_scaffold_plots(self.assembler)
         elif int(timeit.default_timer()) - self.timer > self.intensity and \
                 self.triggerMode == 'time':
                 if self.runMode == 'scaffold':
-                    print("Run scaffold")
+                    print("Scaffolding")
                     self.scaffolder.run_scaffold(self.passCounter)
                     self.UI.update_scaffold_plots(self.scaffolder)
                 else:
-                    self.assembler.run_mini('np_reads.fasta', self.output,
-                                                self.passCounter)
+                    print("Assembly")
+                    self.assembler.run_mini(self.passCounter)
                     self.UI.update_scaffold_plots(self.assembler)
                 self._reset_timer()
 
@@ -117,10 +126,10 @@ class MainApp(object):
             print('Error: intensity is not a valid number')
 
     def _setup_scaffolder(self, contig_file, sspace_path=None):
-            self.scaffolder = schavott.Scaffold.Scaffold(contig_file, self.output + '/np_reads.fasta',  self.scaffoldApp, self.output, sspace_path)
+        self.scaffolder = schavott.Scaffold.Scaffold(contig_file, os.path.join(self.output + 'np_reads.fasta'),  self.scaffoldApp, self.output, sspace_path)
 
     def _setup_assembler(self):
-        self.assembler = schavott.Assembler.Assembly()
+        self.assembler = schavott.Assembler.Assembly(self.output, os.path.join(self.output + 'np_reads.fasta'))
 
     def _setup_plots(self):
         if self.runMode == 'scaffold':
