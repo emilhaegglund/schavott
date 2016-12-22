@@ -23,5 +23,5 @@ setup(name='schavott',
         'watchdog',
         'numpy'],
       keywords = ['MinION-sequencing', 'Bioinformatics', 'Real-time'],
-      download_url = 'https://github.bom/emilhaegglund/schavott/tarball/0.3'
+      download_url = 'https://github.com/emilhaegglund/schavott/tarball/v0.3'
       )
