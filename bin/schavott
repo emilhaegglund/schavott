@@ -41,9 +41,9 @@ def parse_arguments():
                         help='''Which scaffolder to use.''')
     parser.add_argument('--sspace_path', '-p',
                         help='Path to SSPACE (Only for scaffolding)')
-    parser.add_argument('--min_read_length', '-l', default=5000,
+    parser.add_argument('--min_read_length', '-l', default=0,
                         help='''Minimum read length from MinION to use.''')
-    parser.add_argument('--min_quality', '-q', default=9,
+    parser.add_argument('--min_quality', '-q', default=0,
                         help='''Minimum quality for reads from MinION to use.''')
     parser.add_argument('--watch', '-w', required=True,
                         help='Directory to watch for fast5 files')
@@ -53,6 +53,8 @@ def parse_arguments():
                         choices=['time', 'reads'],
                         help='''Use timer or read count.\
                         [reads]''')
+    parser.add_argument('--skip', '-j',
+                        help='''Skips the first j read of the sequencing''')
     parser.add_argument('--intensity', '-i', default=100,
                         help='''How often the scaffolding process should run.\
                         If run mode is set to reads, scaffolding will run\

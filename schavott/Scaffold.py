@@ -57,8 +57,8 @@ class Scaffold(object):
         self._create_single_fasta()
         # Run SSPACE without alignment step
         args = ['perl', self.sspacePath, '-c', self.contigPath,
-                '-p', self.npReads, '-i', '70', '-a', '1500', '-g' '-5000',
-                '-b', outdir]
+                '-p', self.npReads, '-i', '70', '-b', outdir, '-g', '-5000', '-t', '18']
+        print(args)
 
         process = subprocess.Popen(args, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)

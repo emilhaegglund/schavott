@@ -8,18 +8,22 @@ import schavott.Scaffold
 import schavott.Assembler
 
 class MainApp(object):
+    # TODO: Add switch to discard xx number of reads in the beginning
+    # to avoid reads from wrong organism in the scaffolding.
     def __init__(self, args):
         self.readQue = []
         self.reads = []
         self.passCounter = 0
         self.failCounter = 0
         self.runMode = args.run_mode
+        self.skip = args.skip
+        self.skip_counter = 0
         self.output = args.output
         self.plot = args.plot
         self.triggerMode = args.trigger_mode
         # Will be added to argument list
         self.readLengths = []
-        self.minQuality = args.min_quality
+        self.minQuality = int(args.min_quality)
         self.minLength = int(args.min_read_length)
         self._reset_timer()
         self._set_intensity(args.intensity)
@@ -53,29 +57,32 @@ class MainApp(object):
     def open_read(self, filePath):
         """Open downloaded fast5"""
         # Try to read fast5 file.
-        try:
-            head, tail = os.path.split(filePath)
-            root, ext = os.path.splitext(tail)
-            read = schavott.ReadData.ReadData(filePath)
-            self.add_read(read)
-            if read.get_twod():
-                self.readLengths.append(read.get_length())
-                if read.get_quality() >= self.minQuality and read.get_length() >= self.minLength:
-                    read.set_pass()
-                    with open(os.path.join(self.output, "reads_fasta", root) + '.fasta', 'w') as f:
-                        f.write(str(read.get_fasta()))
-                    f.close()
-            self.update_counter(read)
-            #print("PassCounter: " + str(self.passCounter))
-            #print("FailCounter: " + str(self.failCounter))
-            #print("Reads not possible to open: " + str(len(self.readQue)))
-        except AttributeError:
-            self.add_to_readQue(filePath)
-
-            
-        
-        # If the file is not completly downloaded or corrupt
-        
+        self.skip_counter += 1
+        if self.skip_counter > self.skip:
+            try:
+                head, tail = os.path.split(filePath)
+                root, ext = os.path.splitext(tail)
+                read = schavott.ReadData.ReadData(filePath)
+                self.add_read(read)
+                # Change if statement to if read.get_twod(): to use 2D reads, depricated from ONT.
+                if False:
+                    self.readLengths.append(read.get_length())
+                    if read.get_quality() >= self.minQuality and read.get_length() >= self.minLength:
+                        read.set_pass()
+                        with open(os.path.join(self.output, "reads_fasta", root) + '.fasta', 'w') as f:
+                            f.write(str(read.get_fasta()))
+                        f.close()
+                        self.update_counter(read)
+                    else:
+                        self.readLengths.append(read.get_length_1d())
+                        if read.get_quality_1d() >= self.minQuality and read.get_length_1d() >= self.minLength:
+                        read.set_pass()
+                        with open(os.path.join(self.output, "reads_fasta", root) + '.fasta', 'w') as f:
+                            f.write(str(read.get_fasta_1d()))
+                        f.close()
+                        self.update_counter(read)
+            except AttributeError:
+                self.add_to_readQue(filePath)
 
     def add_read(self, read):
         self.reads.append(read)
@@ -83,6 +90,7 @@ class MainApp(object):
     def update_counter(self, read):
         if read.get_pass():
             self.passCounter += 1
+            print('Reads: ' + str(self.passCounter))
             self.run_scaffold()
         else:
             self.failCounter += 1

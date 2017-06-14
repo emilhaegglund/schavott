@@ -26,7 +26,7 @@ times["moveTimes"] = times["unix_timestamp_end"] - min(times["exp_starttime"])
 times = times.sort_values(["moveTimes"])
 # Create a list with all filenames in the dataframe
 path = list(times['filename'])
-
+print(times["unix_timestamp_end"])
 # Wait until each read is completed, then move it to the output_path
 prev_time = 0
 print("Start copying files to " + output_path)
