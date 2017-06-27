@@ -1,6 +1,7 @@
 Schavott v0.4.1
 ========
-[![bioconda-badge](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io)  
+[![bioconda-badge](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io) [![PyPI release](https://img.shields.io/pypi/v/schavott.svg)](https://pypi.python.org/pypi/schavott/)
+
 Applictions to monitor scaffolding or assembly of bacterial genomes in Real-time with MinION sequencing.  
 SSPACE-longreads or links can be used for scaffolding, and the minimap/miniasm pipeline can be used for assembly.  
 ![Schavott GUI](https://github.com/emilhaegglund/schavott/blob/master/gui.png)
