@@ -1,4 +1,4 @@
-Schavott v0.3.0
+Schavott v0.4
 ========
 [![bioconda-badge](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io)  
 Applictions to monitor scaffolding or assembly of bacterial genomes in Real-time with MinION sequencing.  
@@ -59,7 +59,10 @@ Directory to watch for fast5 files, usually metrichor downloads/pass folder.
 Minimum read length to use. (Default: 5000)  
   
 `--min_quality`  
-Minimum read quality. (Default: 9)  
+Minimum read quality. (Default: 9)
+
+`--skip SKIP, -j SKIP`
+Skip the first reads of the sequencing run. (Default: 0)
   
 `--contig_file CONTIG_FILE, -c CONTIG_FILE`  
 Path to contig file if scaffolding, fasta-format.  
