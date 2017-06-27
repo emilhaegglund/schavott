@@ -1,4 +1,4 @@
-Schavott v0.4
+Schavott v0.4.1
 ========
 [![bioconda-badge](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io)  
 Applictions to monitor scaffolding or assembly of bacterial genomes in Real-time with MinION sequencing.  
