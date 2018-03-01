@@ -1,0 +1,19 @@
+name: schavott_env
+channels:
+- anaconda
+- cyclus
+- biocore
+- bioconda
+- conda-forge
+- defaults
+dependencies:
+- python=2.7
+- bokeh
+- watchdog
+- h5py
+- miniasm
+- minimap
+- LINKS
+- sspace
+
+prefix: /path_to_conda_env/miniconda2/envs/schavott_env
