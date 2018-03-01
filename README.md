@@ -86,9 +86,22 @@ Set output filename. (Defaut: schavott)
 `--plot`  
 Show bokeh GUI in web-browser, this require a bokeh server to run.
 
-Test run using old MinION data
+Test run using existing MinION data
 ------------------------------
-It is possible to test the application using already sequenced data. To do this, the time-information and the path to the fast5-files must be extracted. To do this, run [poretools](https://github.com/arq5x/poretools) times on the folder containing the fast5-files.
+
+### Modern data (>=9.4)
+
+You may use the simulation script to test the application using already sequenced data that is basecalled using albacore (>2.0). 
+
+```
+python read_simulation [path/to/source_folder/] [path/to/watchdir] [start time] --speed super-sonic --force 
+```
+
+The force parameter is used to clean your watchdir from previous files to avoid duplication and manual cleaning of folder during tests. If you want to speed things up when testing, you could always change `real-time` to `fast-forward` or `super-sonic`.
+
+### Ancient data (<=7.3)
+
+It is possible to test the application using already sequenced data by older generation of the technology. To do this, the time-information and the path to the fast5-files must be extracted. To do this, run [poretools](https://github.com/arq5x/poretools) times on the folder containing the fast5-files.
 
 ```poretools times path/to/fast5-dir > times.csv```  
 
@@ -97,10 +110,3 @@ In a second terminal start the Schavott application using the previously describ
 ```
 python move_fast5.py times.csv target_dir/ real-time
 ```
-
-# force is used to clean your watchdir from previous files to avoid duplication and manual cleaning of folder during tests.
-```
-python read_simulation [path/to/source_folder/] [path/to/watchdir] [start time] --speed super-sonic --force 
-```
-
-If you want to speed things up when testing, you could always change `real-time` to `fast-forward`or `super-sonic`.
