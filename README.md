@@ -94,7 +94,7 @@ Test run using existing MinION data
 You may use the simulation script to test the application using already sequenced data that is basecalled using albacore (>2.0). 
 
 ```
-python read_simulation [path/to/source_folder/] [path/to/watchdir] [start time] --speed super-sonic --force 
+python read_simulation.py [path/to/source_folder/] [path/to/watchdir] [start time] --speed super-sonic --force 
 ```
 
 The force parameter is used to clean your watchdir from previous files to avoid duplication and manual cleaning of folder during tests. If you want to speed things up when testing, you could always change `real-time` to `fast-forward` or `super-sonic`.
