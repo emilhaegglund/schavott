@@ -13,7 +13,8 @@ dependencies:
 - h5py
 - miniasm
 - minimap
-- LINKS
+- links
 - sspace
+- pyfasta
 
 prefix: /path_to_conda_env/miniconda2/envs/schavott_env

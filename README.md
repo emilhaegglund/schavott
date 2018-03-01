@@ -1,4 +1,4 @@
-Schavott v0.4.1
+Schavott v0.5.0
 ========
 [![bioconda-badge](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io) [![PyPI release](https://img.shields.io/pypi/v/schavott.svg)](https://pypi.python.org/pypi/schavott/)
 
@@ -13,6 +13,12 @@ Bokeh
 h5py 2.2.0  
 Watchdog 0.8.3  
 pyfasta  
+
+Using Conda
+-------------
+A conda environment installation settingsfile was added in config/schavott_conda_env.yaml
+The path to your local conda installation needs to be modified. Then run:
+conda env create -f config/schavott_conda_env.yaml
 
 Applications
 -------------
@@ -90,6 +96,11 @@ In a second terminal start the Schavott application using the previously describ
 
 ```
 python move_fast5.py times.csv target_dir/ real-time
+```
+
+# force is used to clean your watchdir from previous files to avoid duplication and manual cleaning of folder during tests.
+```
+python read_simulation [path/to/source_folder/] [path/to/watchdir] [start time] --speed super-sonic --force 
 ```
 
 If you want to speed things up when testing, you could always change `real-time` to `fast-forward`or `super-sonic`.
