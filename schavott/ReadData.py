@@ -2,35 +2,58 @@ import h5py
 import datetime
 import numpy as np
 
-
 class ReadData(object):
-    def __init__(self, filePath):
-        self.open_read(filePath)
-        self.passQuality = False
+    def __init__(self, filePath=False, fasta_seq=False, fastq_quality=False,seqlen=False,start_time=False):
+        ### The new basecallers for nanopore has a quality pass/fail test included, hence is not nessesary check read quality in schavott.
+        self.passQuality = True
         self.twod = False
         self.oned = False
-        self.set_time()
-        self.set_1d()
-        self.set_length_1d()
-        self.set_quality_1d()
-        self.set_fastq_1d()
-        self.set_fasta_1d()
-        self.set_2d()
-        self.set_length()
-        self.set_quality()
-        self.set_fastq()
-        self.set_fasta()
-        self.close_read()
+        #self.type = event.src_path.strip().rsplit(".")[-1]
+        if filePath:
+            '''Input is in fast5 format, open read with h5py and parse read information'''
+            self.type="fast5"
+            open_read(filePath)
+            self.passQuality = False
+            self.set_time(fast5=True)
+            self.set_1d()
+            self.set_length_1d()
+            self.set_quality_1d()
+            self.set_fastq_1d()
+            self.set_fasta_1d()
+            self.set_2d()
+            self.set_length()
+            self.set_quality()
+            self.set_fastq()
+            self.set_fasta()
+            self.close_read()
+
+            '''The new fasta files do not have single read constraint, which means that multiple reads can come from one file, if this is the case the file will be looped before turned into a read'''
+        elif fastq_quality:
+            '''Input is in fasta format, add the fasta sequence to the read information'''
+            self.type="fastq"
+            self.set_fastq(fastq_quality)
+            self.set_fasta(fasta_seq)
+            self.set_length(length=seqlen)
+        elif fasta_seq:
+            '''Input is in fastq format, store the fastq quality string and the sequence'''
+            self.type="fasta"
+            self.set_fasta(fasta_seq)
+            self.set_length(length=seqlen)
+
+        ## Set timestamp
+        if start_time:
+            #self.set_time(time=start_time)
+            self.set_time()
+        else:
+            self.set_time()
 
     def open_read(self, path):
         try:
             self._fast5 = h5py.File(path)
-            #print('Read: ' + path)
         except IOError:
-            print('File was not possible to open')
-        
+            print('{File} was not possible to open'.format(path))
+
     def close_read(self):
-        """Always remember to close your open files... """
         self._fast5.close()
 
     def set_2d(self):
@@ -40,7 +63,7 @@ class ReadData(object):
             #print('Has 2D')
         except:
             print('No 2D sequence')
-    
+
     def set_1d(self):
         try:
             self._fast5['Analyses']['Basecall_1D_000']['BaseCalled_template']
@@ -56,7 +79,7 @@ class ReadData(object):
     def set_fastq_1d(self):
         if self.oned:
             self.fastq_1d = str(np.array(self._fast5['Analyses']['Basecall_1D_000']['BaseCalled_template']['Fastq']))
-    
+
     def set_fasta_1d(self):
         if self.oned:
             raw_fasta = self.fastq_1d.split('\n')[:2]
@@ -64,30 +87,41 @@ class ReadData(object):
             seq = raw_fasta[1] + '\n'
             self.fasta_1d = header + seq
 
-    def set_length(self):
-        if self.twod:
+    def set_length(self, length=False):
+        if length:
+            ## The fasta file is split in case there is a header > \n sequence also any trailing spaces will be stripped before counting bases
+            self.length = length
+        elif self.twod:
             self.length = self._fast5['Analyses']['Basecall_2D_000']['Summary']['basecall_2d'].attrs['sequence_length']
             #print('Read length (2d): ' + str(self.length))
 
-    def set_fastq(self):
-        if self.twod:
+    def set_fastq(self,fastq=False):
+        if fastq:
+            self.fastq = fastq
+        elif self.twod:
             self.fastq = str(np.array(self._fast5['Analyses']['Basecall_2D_000']['BaseCalled_2D']['Fastq']))
-            
-    def set_fasta(self):
-        if self.twod:
+
+    def set_fasta(self, fasta=False):
+        if fasta:
+            self.fasta = fasta
+        elif self.twod:
             raw_fasta = self.fastq.split('\n')[:2]
             header = '>' + raw_fasta[0][3:] + '\n'
             seq = raw_fasta[1] + '\n'
             self.fasta = header + seq
 
-    def set_time(self):
-        expStartTime = self._fast5['UniqueGlobalKey']['tracking_id'].attrs['exp_start_time']
-        samplingRate = self._fast5['UniqueGlobalKey']['channel_id'].attrs['sampling_rate']
-        for key in self._fast5['Raw']['Reads'].keys():
-            startSample = self._fast5['Raw']['Reads'][key].attrs['start_time']
-            durationSample = self._fast5['Raw']['Reads'][key].attrs['duration']
+    def set_time(self,fast5=False,time=False):
+        if fast5:
+            expStartTime = self._fast5['UniqueGlobalKey']['tracking_id'].attrs['exp_start_time']
+            samplingRate = self._fast5['UniqueGlobalKey']['channel_id'].attrs['sampling_rate']
+            for key in self._fast5['Raw']['Reads'].keys():
+                startSample = self._fast5['Raw']['Reads'][key].attrs['start_time']
+                durationSample = self._fast5['Raw']['Reads'][key].attrs['duration']
         #self.startTime = datetime.datetime.fromtimestamp(int(expStartTime) + float(startSample)/samplingRate + float(durationSample)/samplingRate)
-        self.startTime = datetime.datetime.now().time()
+        if time:
+            self.startTime = time
+        else:
+            self.startTime = datetime.datetime.now().time()
 
     def set_quality(self):
         if self.twod:

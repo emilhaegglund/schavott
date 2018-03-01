@@ -6,6 +6,8 @@ import schavott.ReadData
 import schavott.UI
 import schavott.Scaffold
 import schavott.Assembler
+from datetime import datetime
+
 
 class MainApp(object):
     # TODO: Add switch to discard xx number of reads in the beginning
@@ -27,7 +29,7 @@ class MainApp(object):
         self.minLength = int(args.min_read_length)
         self._reset_timer()
         self._set_intensity(args.intensity)
-        
+
         # Create scaffold or assembly object
         if self.runMode == 'scaffold':
             self.scaffoldApp = args.scaffolder
@@ -41,7 +43,7 @@ class MainApp(object):
         # Create plots
         if self.plot:
             self._setup_plots()
-        
+
         # Create output directories
         if os.path.isdir(self.output):
             if os.listdir(self.output) == ['reads_fasta']:
@@ -49,7 +51,9 @@ class MainApp(object):
             elif os.listdir(self.output) == []:
                 os.mkdir(os.path.join(self.output, 'reads_fasta'))
             else:
-                sys.exit("Output directory contains something, use an empty dir")
+                print(os.listdir(self.output))
+                sys.exit("Output directory is not empty, use an empty directory")
+
         else:
             os.mkdir(self.output)
             os.mkdir(os.path.join(self.output, 'reads_fasta'))
@@ -64,25 +68,71 @@ class MainApp(object):
                 root, ext = os.path.splitext(tail)
                 read = schavott.ReadData.ReadData(filePath)
                 self.add_read(read)
+                self.update_counter(read)
                 # Change if statement to if read.get_twod(): to use 2D reads, depricated from ONT.
-                if False:
-                    self.readLengths.append(read.get_length())
-                    if read.get_quality() >= self.minQuality and read.get_length() >= self.minLength:
-                        read.set_pass()
-                        with open(os.path.join(self.output, "reads_fasta", root) + '.fasta', 'w') as f:
-                            f.write(str(read.get_fasta()))
-                        f.close()
-                        self.update_counter(read)
-                    else:
-                        self.readLengths.append(read.get_length_1d())
-                        if read.get_quality_1d() >= self.minQuality and read.get_length_1d() >= self.minLength:
-                        read.set_pass()
-                        with open(os.path.join(self.output, "reads_fasta", root) + '.fasta', 'w') as f:
-                            f.write(str(read.get_fasta_1d()))
-                        f.close()
-                        self.update_counter(read)
+                self.readLengths.append(read.get_length_1d())
+                if read.get_quality_1d() >= self.minQuality and read.get_length_1d() >= self.minLength:
+                    read.set_pass()
+                with open(os.path.join(self.output, "reads_fasta", root) + '.fasta', 'w') as f:
+                    f.write(str(read.get_fasta_1d()))
+                f.close()
+                self.update_counter(read)
+
             except AttributeError:
                 self.add_to_readQue(filePath)
+
+    def parse_time(self,header):
+        '''The new files have their timestamp in the header of the read, parse the header and return the timestamp'''
+        time_str = header.strip().split("start_time=")[-1].split("Z")[0]
+        time = datetime.strptime(time_str, '%Y-%m-%dT%H:%M:%S')
+        return time
+
+    def open_fasta(self,path):
+        '''Function that reads and handles fasta sources'''
+        try:
+            with open(path) as self._fasta:
+                row = self._fasta.readline()
+                head, tail = os.path.split(path)
+                root, ext = os.path.splitext(tail)
+                while row:
+                    header = row.strip()
+                    header = ">"+header[1:]
+                    sequence = self.fasta.readline().strip()
+                    fasta_seq = header + "\n" + sequence +"\n"
+                    read = schavott.ReadData.ReadData(fasta_seq = fastq_seq)
+                    self.add_read(read)
+                    self.update_counter(read)
+                    os.system("cp "+path+" "+os.path.join(self.output, "reads_fasta", root) + '.fasta')
+                    row = self._fasta.readline()
+        except IOError:
+            print('{File} was not possible to open'.format(path))
+
+    def open_fastq(self,path):
+        '''Function that reads and handles fasta sources'''
+        try:
+            with open(path) as self._fastq:
+                row = self._fastq.readline()
+                head, tail = os.path.split(path)
+                root, ext = os.path.splitext(tail)
+                while row:
+                    header = row.strip()
+                    header = ">"+header[1:]
+                    time=self.parse_time(header)
+                    sequence = self._fastq.readline().strip()
+                    seqlen = len(sequence)
+                    sep = self._fastq.readline()
+                    quality = self._fastq.readline()
+                    fasta_seq = header + "\n" + sequence +"\n"
+                    read = schavott.ReadData.ReadData(fastq_quality=quality, fasta_seq = fasta_seq,seqlen=seqlen,start_time=time)
+                    self.add_read(read)
+                    self.update_counter(read)
+                    #os.system("cp "+path+" "+os.path.join(self.output, "reads_fasta", root) + '.fasta')
+                    with open(os.path.join(self.output, "reads_fasta", root) + '.fasta', 'w') as f:
+                        f.write(str(read.get_fasta()))
+                    f.close()
+                    row = self._fastq.readline()
+        except IOError:
+            print('{File} was not possible to open'.format(path))
 
     def add_read(self, read):
         self.reads.append(read)
@@ -90,7 +140,7 @@ class MainApp(object):
     def update_counter(self, read):
         if read.get_pass():
             self.passCounter += 1
-            print('Reads: ' + str(self.passCounter))
+            #print('Reads: ' + str(self.passCounter))
             self.run_scaffold()
         else:
             self.failCounter += 1
@@ -134,10 +184,10 @@ class MainApp(object):
             print('Error: intensity is not a valid number')
 
     def _setup_scaffolder(self, contig_file, sspace_path=None):
-        self.scaffolder = schavott.Scaffold.Scaffold(contig_file, os.path.join(self.output + 'np_reads.fasta'),  self.scaffoldApp, self.output, sspace_path)
+        self.scaffolder = schavott.Scaffold.Scaffold(contig_file, os.path.join(self.output, 'np_reads.fasta'),  self.scaffoldApp, self.output, sspace_path)
 
     def _setup_assembler(self):
-        self.assembler = schavott.Assembler.Assembly(self.output, os.path.join(self.output + 'np_reads.fasta'))
+        self.assembler = schavott.Assembler.Assembly(self.output, os.path.join(self.output, 'np_reads.fasta'))
 
     def _setup_plots(self):
         if self.runMode == 'scaffold':

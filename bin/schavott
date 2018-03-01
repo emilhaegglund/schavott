@@ -12,16 +12,21 @@ from schavott.ReadData import ReadData
 from schavott.Scaffold import Scaffold
 
 
-class Fast5Handler(PatternMatchingEventHandler):
-    patterns = ["*.fast5"]
+class FastaHandler(PatternMatchingEventHandler):
 
-    def __init__(self, schavott):
+    def __init__(self, schavott,_type):
         PatternMatchingEventHandler.__init__(self)
         self.schavott = schavott
+        self.pattern = "*."+_type
+        self.type=_type
 
     def on_created(self, event):
-        self.schavott.open_read(event.src_path)
-
+        if self.type == "fast5":
+            self.schavott.open_read(event.src_path)
+        elif self.type == "fasta":
+            self.schavott.open_fasta(event.src_path)
+        elif self.type == "fastq":
+            self.schavott.open_fastq(event.src_path)
 
 def parse_arguments():
     """Parse command line arguments.
@@ -41,6 +46,11 @@ def parse_arguments():
                         help='''Which scaffolder to use.''')
     parser.add_argument('--sspace_path', '-p',
                         help='Path to SSPACE (Only for scaffolding)')
+    parser.add_argument('--read_type', "-rt",
+                        choices=["fast5","fastq","fasta"],
+                        default="fast5",
+                        help="Select input type: fastq, fast5 or fasta, this is also the search pattern for shavott (*.read_type)"
+                        )
     parser.add_argument('--min_read_length', '-l', default=0,
                         help='''Minimum read length from MinION to use.''')
     parser.add_argument('--min_quality', '-q', default=0,
@@ -80,7 +90,12 @@ def main():
     print("Observer created")
     schavott = MainApp(args)
     print("Main app created")
-    observer.schedule(Fast5Handler(schavott), path=args.watch)
+
+    '''Schavott is updated to handle fastq and fasta files directly (not fast5)
+        Changes were implemented by David Sundell @ foi.se
+    '''
+
+    observer.schedule(FastaHandler(schavott,args.read_type), path=args.watch)
     observer.start()
     print("Observer started")
 

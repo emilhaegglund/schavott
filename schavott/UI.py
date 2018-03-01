@@ -1,4 +1,4 @@
-from bokeh.io import gridplot
+from bokeh.layouts import gridplot
 from bokeh.plotting import figure, curdoc
 from bokeh.client import push_session
 from bokeh.models import ColumnDataSource, HoverTool, NumeralTickFormatter
@@ -42,7 +42,7 @@ class UI(object):
 
     def update_read_plots(self, read, nrReads, passCounter, failCounter):
         '''Update plot dict for read information'''
-        
+
         read_data = dict(
             nrReads=[nrReads],
             nrPassReads=[passCounter],
@@ -139,7 +139,7 @@ class UI(object):
         plot.xaxis.major_label_text_font_size = '14pt'
         plot.yaxis[0].formatter = NumeralTickFormatter(format='0.00a')
         plot.title.text_font_size = '16pt'
-        
+
         return plot
 
     def _draw_contigCirclePlot(self):
